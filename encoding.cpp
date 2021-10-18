@@ -48,7 +48,7 @@ static inline void zval_double_wrapper(zval* zv, TValue value) {
 	ZVAL_DOUBLE(zv, value);
 }
 
-template<typename TValue, ByteOrder BYTE_ORDER, void(*assignResult)(zval*, TValue)>
+template<typename TValue, ByteOrder byteOrder, void(*assignResult)(zval*, TValue)>
 void ZEND_FASTCALL readType(INTERNAL_FUNCTION_PARAMETERS) {
 	zend_string* bytes;
 
@@ -62,7 +62,7 @@ void ZEND_FASTCALL readType(INTERNAL_FUNCTION_PARAMETERS) {
 		return;
 	}
 
-	if (BYTE_ORDER == ByteOrder::Native) {
+	if (byteOrder == ByteOrder::Native) {
 		assignResult(return_value, *(reinterpret_cast<TValue*>(ZSTR_VAL(bytes))));
 		return;
 	}

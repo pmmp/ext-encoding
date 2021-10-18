@@ -5,7 +5,7 @@ PHP_ARG_ENABLE([encoding],
   [no])
 
 if test "$PHP_ENCODING" != "no"; then
-  PHP_REQUIRE_CXX();
+  PHP_REQUIRE_CXX()
 
   dnl the 6th parameter here is required for C++ shared extensions
   PHP_NEW_EXTENSION(encoding, encoding.cpp, $ext_shared,,, yes)

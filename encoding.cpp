@@ -14,6 +14,7 @@ extern "C" {
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_read_integer, 0, 1, IS_LONG, 0)
 	ZEND_ARG_TYPE_INFO(0, bytes, IS_STRING, 0)
+	ZEND_ARG_TYPE_INFO(1, offset, IS_LONG, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_write_integer, 0, 1, IS_STRING, 0)
@@ -22,6 +23,7 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_read_float, 0, 1, IS_DOUBLE, 0)
 	ZEND_ARG_TYPE_INFO(0, bytes, IS_STRING, 0)
+	ZEND_ARG_TYPE_INFO(1, offset, IS_LONG, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_write_float, 0, 1, IS_STRING, 0)
@@ -51,19 +53,43 @@ static inline void zval_double_wrapper(zval* zv, TValue value) {
 template<typename TValue, ByteOrder byteOrder, void(*assignResult)(zval*, TValue)>
 void ZEND_FASTCALL readType(INTERNAL_FUNCTION_PARAMETERS) {
 	zend_string* bytes;
+	zval* zoffset = NULL;
+	zend_long offset = 0;
 
-	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 2)
 		Z_PARAM_STR(bytes)
+		Z_PARAM_OPTIONAL
+		Z_PARAM_ZVAL_EX(zoffset, 0, 0)
 	ZEND_PARSE_PARAMETERS_END();
 
+	if (zoffset != NULL) {
+		auto type = Z_TYPE_P(Z_REFVAL_P(zoffset));
+		if (type != IS_LONG && type != IS_NULL) {
+			zend_type_error("$offset expects int|null, %s given", zend_get_type_by_const(type));
+			return;
+		}
+
+		offset = static_cast<size_t>(Z_LVAL_P(Z_REFVAL_P(zoffset)));
+
+		if (offset < 0) {
+			zend_value_error("$offset expects at least 0, %zu given", offset);
+			return;
+		}
+	}
+
 	const auto SIZE = sizeof(TValue);
-	if (ZSTR_LEN(bytes) < SIZE) {
+	if (ZSTR_LEN(bytes) - offset < SIZE) {
 		zend_throw_exception_ex(spl_ce_InvalidArgumentException, 0, "Need at least %zu bytes, but only have %zu bytes", SIZE, ZSTR_LEN(bytes));
 		return;
 	}
 
+	if (zoffset != NULL) {
+		ZVAL_LONG(Z_REFVAL_P(zoffset), offset + SIZE);
+	}
+
 	if (byteOrder == ByteOrder::Native) {
-		assignResult(return_value, *(reinterpret_cast<TValue*>(ZSTR_VAL(bytes))));
+		assignResult(return_value, *(reinterpret_cast<TValue*>(&ZSTR_VAL(bytes)[offset])));
+
 		return;
 	}
 
@@ -72,8 +98,9 @@ void ZEND_FASTCALL readType(INTERNAL_FUNCTION_PARAMETERS) {
 		char bytes[sizeof(TValue)];
 		TValue value;
 	} result;
+
 	for (auto i = 0; i < sizeof(TValue); i++) {
-		result.bytes[sizeof(TValue) - i - 1] = ZSTR_VAL(bytes)[i];
+		result.bytes[sizeof(TValue) - i - 1] = ZSTR_VAL(bytes)[i + offset];
 	}
 	assignResult(return_value, result.value);
 }

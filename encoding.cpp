@@ -75,8 +75,8 @@ static inline void setOffsetReferenceParameter(zval* const zoffset, const zend_l
 	}
 }
 
-template<typename TValue, ByteOrder byteOrder, void(*assignResult)(zval*, TValue)>
-void ZEND_FASTCALL zif_readFixedSizeType(INTERNAL_FUNCTION_PARAMETERS) {
+template<typename TValue, bool (*readTypeFunc)(zend_string* bytes, zend_long& offset, TValue& result), void(*assignResult)(zval*, TValue)>
+void ZEND_FASTCALL zif_readType(INTERNAL_FUNCTION_PARAMETERS) {
 	zend_string* bytes;
 	zval* zoffset = NULL;
 	zend_long offset = 0;
@@ -90,54 +90,41 @@ void ZEND_FASTCALL zif_readFixedSizeType(INTERNAL_FUNCTION_PARAMETERS) {
 	if (!handleOffsetReferenceParameter(zoffset, offset)) {
 		return;
 	}
+
+	TValue result;
+	if (readTypeFunc(bytes, offset, result)) {
+		setOffsetReferenceParameter(zoffset, offset);
+		assignResult(return_value, result);
+	}
+}
+
+template<typename TValue, ByteOrder byteOrder>
+static inline bool readFixedSizeType(zend_string* bytes, zend_long& offset, TValue& result) {
 
 	const auto SIZE = sizeof(TValue);
 	if (ZSTR_LEN(bytes) - offset < SIZE) {
 		zend_throw_exception_ex(spl_ce_InvalidArgumentException, 0, "Need at least %zu bytes, but only have %zu bytes", SIZE, ZSTR_LEN(bytes));
-		return;
+		return false;
 	}
-
-	setOffsetReferenceParameter(zoffset, offset + SIZE);
 
 	if (byteOrder == ByteOrder::Native) {
-		assignResult(return_value, *(reinterpret_cast<TValue*>(&ZSTR_VAL(bytes)[offset])));
+		result = *(reinterpret_cast<TValue*>(&ZSTR_VAL(bytes)[offset]));
+	} else {
+		//endian flip
+		union {
+			char bytes[sizeof(TValue)];
+			TValue value;
+		} flipper;
 
-		return;
+		for (auto i = 0; i < sizeof(TValue); i++) {
+			flipper.bytes[sizeof(TValue) - i - 1] = ZSTR_VAL(bytes)[i + offset];
+		}
+
+		result = flipper.value;
 	}
 
-	//endian flip
-	union {
-		char bytes[sizeof(TValue)];
-		TValue value;
-	} result;
-
-	for (auto i = 0; i < sizeof(TValue); i++) {
-		result.bytes[sizeof(TValue) - i - 1] = ZSTR_VAL(bytes)[i + offset];
-	}
-	assignResult(return_value, result.value);
-}
-
-template<bool (*readVarIntFunc)(zend_string* bytes, zend_long& offset, zend_ulong& result)>
-void ZEND_FASTCALL zif_readVarInt(INTERNAL_FUNCTION_PARAMETERS) {
-	zend_string* bytes;
-	zval* zoffset = NULL;
-	zend_long offset = 0;
-
-	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 2)
-		Z_PARAM_STR(bytes)
-		Z_PARAM_OPTIONAL
-		Z_PARAM_ZVAL_EX(zoffset, 0, 0)
-	ZEND_PARSE_PARAMETERS_END();
-
-	if (!handleOffsetReferenceParameter(zoffset, offset)) {
-		return;
-	}
-
-	zend_ulong result;
-	if (readVarIntFunc(bytes, offset, result)) {
-		setOffsetReferenceParameter(zoffset, offset);
-		RETURN_LONG((zend_long) result);
-	}
+	offset += SIZE;
+	return true;
 }
 
 template<size_t TYPE_BITS>
@@ -198,22 +185,24 @@ PHP_RINIT_FUNCTION(encoding)
 }
 /* }}} */
 
-#define DEFINE_FENTRY(zend_name, native_type, result_wrapper, arg_info) \
-	ZEND_RAW_FENTRY(zend_name "LE", (zif_readFixedSizeType<native_type, ByteOrder::LittleEndian, result_wrapper>), arg_info, 0) \
-	ZEND_RAW_FENTRY(zend_name "BE", (zif_readFixedSizeType<native_type, ByteOrder::BigEndian, result_wrapper>), arg_info, 0)
+#define DEFINE_FIXED_TYPE_FENTRY(zend_name, native_type, result_wrapper, arg_info) \
+	ZEND_RAW_FENTRY(zend_name "LE", (zif_readType<native_type, readFixedSizeType<native_type, ByteOrder::LittleEndian>, result_wrapper>), arg_info, 0) \
+	ZEND_RAW_FENTRY(zend_name "BE", (zif_readType<native_type, readFixedSizeType<native_type, ByteOrder::BigEndian>, result_wrapper>), arg_info, 0)
+
+#define DEFINE_VARINT_ENTRY(size, size_name) \
+	ZEND_RAW_FENTRY("readUnsignedVar" size_name, (zif_readType<zend_ulong, readUnsignedVarInt<size>, zval_long_wrapper>), arginfo_read_integer, 0) \
+	ZEND_RAW_FENTRY("readSignedVar" size_name, (zif_readType<zend_ulong, readSignedVarInt<size>, zval_long_wrapper>), arginfo_read_integer, 0)
 
 zend_function_entry ext_functions[] = {
-	DEFINE_FENTRY("readUnsignedShort", uint16_t, zval_long_wrapper, arginfo_read_integer)
-	DEFINE_FENTRY("readShort", int16_t, zval_long_wrapper, arginfo_read_integer)
-	DEFINE_FENTRY("readUnsignedInt", uint32_t, zval_long_wrapper, arginfo_read_integer)
-	DEFINE_FENTRY("readInt", int32_t, zval_long_wrapper, arginfo_read_integer)
-	DEFINE_FENTRY("readLong", uint64_t, zval_long_wrapper, arginfo_read_integer)
-	DEFINE_FENTRY("readFloat", float, zval_double_wrapper, arginfo_read_float)
-	DEFINE_FENTRY("readDouble", double, zval_double_wrapper, arginfo_read_float)
-	ZEND_RAW_FENTRY("readUnsignedVarInt", zif_readVarInt<readUnsignedVarInt<32>>, arginfo_read_integer, 0)
-	ZEND_RAW_FENTRY("readUnsignedVarLong", zif_readVarInt<readUnsignedVarInt<64>>, arginfo_read_integer, 0)
-	ZEND_RAW_FENTRY("readSignedVarInt", zif_readVarInt<readSignedVarInt<32>>, arginfo_read_integer, 0)
-	ZEND_RAW_FENTRY("readSignedVarLong", zif_readVarInt<readSignedVarInt<64>>, arginfo_read_integer, 0)
+	DEFINE_FIXED_TYPE_FENTRY("readUnsignedShort", uint16_t, zval_long_wrapper, arginfo_read_integer)
+	DEFINE_FIXED_TYPE_FENTRY("readShort", int16_t, zval_long_wrapper, arginfo_read_integer)
+	DEFINE_FIXED_TYPE_FENTRY("readUnsignedInt", uint32_t, zval_long_wrapper, arginfo_read_integer)
+	DEFINE_FIXED_TYPE_FENTRY("readInt", int32_t, zval_long_wrapper, arginfo_read_integer)
+	DEFINE_FIXED_TYPE_FENTRY("readLong", uint64_t, zval_long_wrapper, arginfo_read_integer)
+	DEFINE_FIXED_TYPE_FENTRY("readFloat", float, zval_double_wrapper, arginfo_read_float)
+	DEFINE_FIXED_TYPE_FENTRY("readDouble", double, zval_double_wrapper, arginfo_read_float)
+	DEFINE_VARINT_ENTRY(32, "Int")
+	DEFINE_VARINT_ENTRY(64, "Long")
 	PHP_FE_END
 };
 

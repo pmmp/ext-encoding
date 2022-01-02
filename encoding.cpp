@@ -143,7 +143,7 @@ void ZEND_FASTCALL zif_readVarInt(INTERNAL_FUNCTION_PARAMETERS) {
 template<size_t TYPE_BITS>
 static inline bool readUnsignedVarInt(zend_string *bytes, zend_long &offset, zend_ulong &result) {
 
-	const auto MAX_BYTES = TYPE_BITS / 7 + (TYPE_BITS % 7 > 0);
+	const unsigned int MAX_BYTES = TYPE_BITS / 7 + (TYPE_BITS % 7 > 0);
 	const auto VARINT_VALUE_MASK = 0x7f;
 	const auto VARINT_MSB_MASK = 0x80;
 

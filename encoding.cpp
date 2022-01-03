@@ -40,6 +40,8 @@ enum class ByteOrder {
 #endif
 };
 
+static zend_class_entry* data_decode_exception_ce;
+
 template<typename TValue>
 static inline void zval_long_wrapper(zval* zv, TValue value) {
 	ZVAL_LONG(zv, value);
@@ -103,7 +105,7 @@ static inline bool readFixedSizeType(zend_string* bytes, zend_long& offset, TVal
 
 	const auto SIZE = sizeof(TValue);
 	if (ZSTR_LEN(bytes) - offset < SIZE) {
-		zend_throw_exception_ex(spl_ce_InvalidArgumentException, 0, "Need at least %zu bytes, but only have %zu bytes", SIZE, ZSTR_LEN(bytes));
+		zend_throw_exception_ex(data_decode_exception_ce, 0, "Need at least %zu bytes, but only have %zu bytes", SIZE, ZSTR_LEN(bytes));
 		return false;
 	}
 
@@ -137,7 +139,7 @@ static inline bool readUnsignedVarInt(zend_string *bytes, zend_long &offset, zen
 	result = 0;
 	for (auto shift = 0; shift < TYPE_BITS; shift += 7) {
 		if (offset >= ZSTR_LEN(bytes)) {
-			zend_throw_exception(spl_ce_InvalidArgumentException, "No bytes left in buffer", 0);
+			zend_throw_exception(data_decode_exception_ce, "No bytes left in buffer", 0);
 			return false;
 		}
 		zend_ulong byte = (zend_ulong) ZSTR_VAL(bytes)[offset++];
@@ -148,7 +150,7 @@ static inline bool readUnsignedVarInt(zend_string *bytes, zend_long &offset, zen
 		}
 	}
 
-	zend_throw_exception_ex(spl_ce_InvalidArgumentException, 0, "VarInt did not terminate after %u bytes!", MAX_BYTES);
+	zend_throw_exception_ex(data_decode_exception_ce, 0, "VarInt did not terminate after %u bytes!", MAX_BYTES);
 	return false;
 }
 
@@ -206,12 +208,21 @@ zend_function_entry ext_functions[] = {
 	PHP_FE_END
 };
 
+PHP_MINIT_FUNCTION(encoding) {
+	zend_class_entry ce;
+	INIT_CLASS_ENTRY(ce, "DataDecodeException", NULL);
+	data_decode_exception_ce = zend_register_internal_class_ex(&ce, spl_ce_RuntimeException);
+	data_decode_exception_ce->ce_flags |= ZEND_ACC_FINAL;
+
+	return SUCCESS;
+}
+
 /* {{{ encoding_module_entry */
 zend_module_entry encoding_module_entry = {
 	STANDARD_MODULE_HEADER,
 	"encoding",					/* Extension name */
 	ext_functions,					/* zend_function_entry */
-	NULL,							/* PHP_MINIT - Module initialization */
+	PHP_MINIT(encoding),			/* PHP_MINIT - Module initialization */
 	NULL,							/* PHP_MSHUTDOWN - Module shutdown */
 	PHP_RINIT(encoding),			/* PHP_RINIT - Request initialization */
 	NULL,							/* PHP_RSHUTDOWN - Request shutdown */

@@ -73,7 +73,7 @@ static inline bool handleOffsetReferenceParameter(const zval* const zoffset, zen
 
 static inline void setOffsetReferenceParameter(zval* const zoffset, const zend_long offset) {
 	if (zoffset != NULL) {
-		ZVAL_LONG(Z_REFVAL_P(zoffset), offset);
+		ZEND_TRY_ASSIGN_REF_LONG(zoffset, offset);
 	}
 }
 
@@ -86,7 +86,7 @@ void ZEND_FASTCALL zif_readType(INTERNAL_FUNCTION_PARAMETERS) {
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 2)
 		Z_PARAM_STR(bytes)
 		Z_PARAM_OPTIONAL
-		Z_PARAM_ZVAL_EX(zoffset, 0, 0)
+		Z_PARAM_ZVAL(zoffset)
 	ZEND_PARSE_PARAMETERS_END();
 
 	if (!handleOffsetReferenceParameter(zoffset, offset)) {

@@ -133,13 +133,13 @@ static inline bool readFixedSizeType(zend_string* bytes, zend_long& offset, TVal
 }
 
 struct VarIntConstants {
-	static const unsigned char BITS_PER_BYTE = 7;
+	static const unsigned char BITS_PER_BYTE = 7u;
 
 	template<size_t TYPE_BITS>
 	static const unsigned char MAX_BYTES = TYPE_BITS / BITS_PER_BYTE + ((TYPE_BITS % BITS_PER_BYTE) > 0);
 
-	static const unsigned char VALUE_MASK = ~(1 << BITS_PER_BYTE);
-	static const unsigned char MSB_MASK = (1 << BITS_PER_BYTE);
+	static const unsigned char VALUE_MASK = ~(1u << BITS_PER_BYTE);
+	static const unsigned char MSB_MASK = (1u << BITS_PER_BYTE);
 };
 
 template<size_t TYPE_BITS, typename TValue>

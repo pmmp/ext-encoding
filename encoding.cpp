@@ -43,6 +43,12 @@ enum class ByteOrder {
 static zend_class_entry* data_decode_exception_ce;
 
 template<typename TValue>
+union Flipper {
+	char bytes[sizeof(TValue)];
+	TValue value;
+};
+
+template<typename TValue>
 static inline void zval_long_wrapper(zval* zv, TValue value) {
 	ZVAL_LONG(zv, value);
 }
@@ -113,10 +119,7 @@ static inline bool readFixedSizeType(zend_string* bytes, zend_long& offset, TVal
 		result = *(reinterpret_cast<TValue*>(&ZSTR_VAL(bytes)[offset]));
 	} else {
 		//endian flip
-		union {
-			char bytes[sizeof(TValue)];
-			TValue value;
-		} flipper;
+		Flipper<TValue> flipper;
 
 		for (auto i = 0; i < sizeof(TValue); i++) {
 			flipper.bytes[sizeof(TValue) - i - 1] = ZSTR_VAL(bytes)[i + offset];
@@ -129,41 +132,156 @@ static inline bool readFixedSizeType(zend_string* bytes, zend_long& offset, TVal
 	return true;
 }
 
-template<size_t TYPE_BITS>
-static inline bool readUnsignedVarInt(zend_string *bytes, zend_long &offset, zend_ulong &result) {
+struct VarIntConstants {
+	static const unsigned char BITS_PER_BYTE = 7;
 
-	const unsigned int MAX_BYTES = TYPE_BITS / 7 + (TYPE_BITS % 7 > 0);
-	const auto VARINT_VALUE_MASK = 0x7f;
-	const auto VARINT_MSB_MASK = 0x80;
+	template<size_t TYPE_BITS>
+	static const unsigned char MAX_BYTES = TYPE_BITS / BITS_PER_BYTE + ((TYPE_BITS % BITS_PER_BYTE) > 0);
 
+	static const unsigned char VALUE_MASK = ~(1 << BITS_PER_BYTE);
+	static const unsigned char MSB_MASK = (1 << BITS_PER_BYTE);
+};
+
+template<size_t TYPE_BITS, typename TValue>
+static inline bool readUnsignedVarInt(zend_string *bytes, zend_long &offset, TValue &result) {
 	result = 0;
-	for (auto shift = 0; shift < TYPE_BITS; shift += 7) {
+	for (auto shift = 0; shift < TYPE_BITS; shift += VarIntConstants::BITS_PER_BYTE) {
 		if (offset >= ZSTR_LEN(bytes)) {
 			zend_throw_exception(data_decode_exception_ce, "No bytes left in buffer", 0);
 			return false;
 		}
-		zend_ulong byte = (zend_ulong) ZSTR_VAL(bytes)[offset++];
+		TValue byte = (TValue) ZSTR_VAL(bytes)[offset++];
 
-		result |= ((byte & VARINT_VALUE_MASK) << shift);
-		if ((byte & VARINT_MSB_MASK) == 0) {
+		result |= ((byte & VarIntConstants::VALUE_MASK) << shift);
+		if ((byte & VarIntConstants::MSB_MASK) == 0) {
 			return true;
 		}
 	}
 
-	zend_throw_exception_ex(data_decode_exception_ce, 0, "VarInt did not terminate after %u bytes!", MAX_BYTES);
+	zend_throw_exception_ex(data_decode_exception_ce, 0, "VarInt did not terminate after %u bytes!", VarIntConstants::MAX_BYTES<TYPE_BITS>);
 	return false;
 }
 
-template<size_t TYPE_BITS>
-static inline bool readSignedVarInt(zend_string* bytes, zend_long& offset, zend_ulong& result) {
-	if (!readUnsignedVarInt<TYPE_BITS>(bytes, offset, result)) {
+template<size_t TYPE_BITS, typename TUnsignedValue, typename TSignedValue>
+static inline bool readSignedVarInt(zend_string* bytes, zend_long& offset, TSignedValue& result) {
+	TUnsignedValue unsignedResult;
+	if (!readUnsignedVarInt<TYPE_BITS, TUnsignedValue>(bytes, offset, unsignedResult)) {
 		return false;
 	}
 
-	zend_ulong mask = result & 1 ? ~0ULL : 0ULL;
+	TUnsignedValue mask = 0;
+	if (unsignedResult & 1) {
+		//we don't know the type of TUnsignedValue here so we can't just use ~0
+		mask = ~mask;
+	}
 
-	result = (result >> 1) ^ mask;
+	result = static_cast<TSignedValue>((unsignedResult >> 1) ^ mask);
 	return true;
+}
+
+
+template<typename TValue>
+static bool zend_parse_parameters_long_wrapper(zend_execute_data* execute_data, TValue& value) {
+	zend_long actualValue;
+
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
+		Z_PARAM_LONG(actualValue)
+	ZEND_PARSE_PARAMETERS_END_EX(return false);
+
+	value = static_cast<TValue>(actualValue);
+
+	return true;
+}
+
+template<typename TValue>
+static bool zend_parse_parameters_double_wrapper(zend_execute_data* execute_data, TValue& value) {
+	double actualValue;
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
+		Z_PARAM_DOUBLE(actualValue)
+	ZEND_PARSE_PARAMETERS_END_EX(return false);
+
+	value = static_cast<TValue>(actualValue);
+
+	return true;
+}
+
+template<typename TValue>
+using parseParametersFunc_t = bool (*)(zend_execute_data* execute_data, TValue& value);
+
+template<typename TValue>
+using writeTypeFunc_t = zend_string* (*)(TValue value);
+
+template<typename TValue, parseParametersFunc_t<TValue> parseParametersFunc, writeTypeFunc_t<TValue> writeTypeFunc>
+void ZEND_FASTCALL zif_writeType(INTERNAL_FUNCTION_PARAMETERS) {
+	TValue value;
+	zend_string* result;
+
+	if (!parseParametersFunc(execute_data, value)) {
+		return;
+	}
+
+	result = writeTypeFunc(value);
+	if (result != NULL) { //assume that the function threw an error if null was returned
+		RETURN_STR(result);
+	}
+}
+
+template<typename TValue, ByteOrder byteOrder>
+static zend_string* writeFixedSizeType(TValue value) {
+	zend_string* result;
+
+	if (byteOrder == ByteOrder::Native) {
+		result = zend_string_init(reinterpret_cast<const char*>(&value), sizeof(TValue), 0);
+	} else {
+		Flipper<TValue> flipper;
+		flipper.value = value;
+
+		result = zend_string_alloc(sizeof(TValue), 0);
+
+		for (auto i = 0; i < sizeof(TValue); i++) {
+			ZSTR_VAL(result)[i] = flipper.bytes[sizeof(TValue) - i - 1];
+		}
+
+		ZSTR_VAL(result)[ZSTR_LEN(result)] = '\0';
+	}
+
+	return result;
+}
+
+template<size_t TYPE_BITS, typename TValue>
+static inline zend_string* writeUnsignedVarInt(TValue value) {
+	char result[VarIntConstants::MAX_BYTES<TYPE_BITS>];
+
+	TValue remaining = value;
+
+	for (auto i = 0; i < VarIntConstants::MAX_BYTES<TYPE_BITS>; i++) {
+		unsigned char nextByte = remaining & VarIntConstants::VALUE_MASK;
+
+		TValue nextRemaining = remaining >> VarIntConstants::BITS_PER_BYTE;
+
+		if (nextRemaining == 0) {
+			result[i] = nextByte;
+
+			return zend_string_init(&result[0], i + 1, 0);
+		}
+
+		result[i] = nextByte | VarIntConstants::MSB_MASK;
+		remaining = nextRemaining;
+	}
+
+	zend_value_error("Value too large to be encoded as a VarInt");
+	return NULL;
+}
+
+template<size_t TYPE_BITS, typename TUnsignedType, typename TSignedType>
+static inline zend_string* writeSignedVarInt(TSignedType value) {
+	TUnsignedType mask = 0;
+	if (value < 0) {
+		//we don't know the type of TUnsignedType here, can't use ~0 directly (the compiler will optimise this anyway)
+		mask = ~mask;
+	}
+
+	return writeUnsignedVarInt<TYPE_BITS, TUnsignedType>((static_cast<TUnsignedType>(value) << 1) ^ mask);
 }
 
 /* {{{ PHP_MINFO_FUNCTION */
@@ -187,24 +305,43 @@ PHP_RINIT_FUNCTION(encoding)
 }
 /* }}} */
 
-#define DEFINE_FIXED_TYPE_FENTRY(zend_name, native_type, result_wrapper, arg_info) \
-	ZEND_RAW_FENTRY(zend_name "LE", (zif_readType<native_type, readFixedSizeType<native_type, ByteOrder::LittleEndian>, result_wrapper>), arg_info, 0) \
-	ZEND_RAW_FENTRY(zend_name "BE", (zif_readType<native_type, readFixedSizeType<native_type, ByteOrder::BigEndian>, result_wrapper>), arg_info, 0)
+#define READ_FIXED_TYPE_FENTRY(zend_name, native_type, result_wrapper, arg_info) \
+	ZEND_RAW_FENTRY(zend_name "LE", (zif_readType<native_type, (readFixedSizeType<native_type, ByteOrder::LittleEndian>), result_wrapper>), arg_info, 0) \
+	ZEND_RAW_FENTRY(zend_name "BE", (zif_readType<native_type, (readFixedSizeType<native_type, ByteOrder::BigEndian>), result_wrapper>), arg_info, 0)
 
-#define DEFINE_VARINT_ENTRY(size, size_name) \
-	ZEND_RAW_FENTRY("readUnsignedVar" size_name, (zif_readType<zend_ulong, readUnsignedVarInt<size>, zval_long_wrapper>), arginfo_read_integer, 0) \
-	ZEND_RAW_FENTRY("readSignedVar" size_name, (zif_readType<zend_ulong, readSignedVarInt<size>, zval_long_wrapper>), arginfo_read_integer, 0)
+#define READ_VARINT_FENTRY(size, size_name, unsigned_type, signed_type) \
+	ZEND_RAW_FENTRY("readUnsignedVar" size_name, (zif_readType<unsigned_type, (readUnsignedVarInt<size, unsigned_type>), zval_long_wrapper>), arginfo_read_integer, 0) \
+	ZEND_RAW_FENTRY("readSignedVar" size_name, (zif_readType<signed_type, (readSignedVarInt<size, unsigned_type, signed_type>), zval_long_wrapper>), arginfo_read_integer, 0)
+
+#define WRITE_FIXED_TYPE_FENTRY(zend_name, native_type, parse_parameters_wrapper, arg_info) \
+	ZEND_RAW_FENTRY(zend_name "LE", (zif_writeType<native_type, parse_parameters_wrapper<native_type>, (writeFixedSizeType<native_type, ByteOrder::LittleEndian>)>), arg_info, 0) \
+	ZEND_RAW_FENTRY(zend_name "BE", (zif_writeType<native_type, parse_parameters_wrapper<native_type>, (writeFixedSizeType<native_type, ByteOrder::BigEndian>)>), arg_info, 0)
+
+#define WRITE_VARINT_FENTRY(size, size_name, unsigned_type, signed_type) \
+	ZEND_RAW_FENTRY("writeUnsignedVar" size_name, (zif_writeType<unsigned_type, zend_parse_parameters_long_wrapper<unsigned_type>, (writeUnsignedVarInt<size, unsigned_type>)>), arginfo_write_integer, 0) \
+	ZEND_RAW_FENTRY("writeSignedVar" size_name, (zif_writeType<signed_type, zend_parse_parameters_long_wrapper<signed_type>, (writeSignedVarInt<size, unsigned_type, signed_type>)>), arginfo_write_integer, 0)
 
 zend_function_entry ext_functions[] = {
-	DEFINE_FIXED_TYPE_FENTRY("readUnsignedShort", uint16_t, zval_long_wrapper, arginfo_read_integer)
-	DEFINE_FIXED_TYPE_FENTRY("readShort", int16_t, zval_long_wrapper, arginfo_read_integer)
-	DEFINE_FIXED_TYPE_FENTRY("readUnsignedInt", uint32_t, zval_long_wrapper, arginfo_read_integer)
-	DEFINE_FIXED_TYPE_FENTRY("readInt", int32_t, zval_long_wrapper, arginfo_read_integer)
-	DEFINE_FIXED_TYPE_FENTRY("readLong", uint64_t, zval_long_wrapper, arginfo_read_integer)
-	DEFINE_FIXED_TYPE_FENTRY("readFloat", float, zval_double_wrapper, arginfo_read_float)
-	DEFINE_FIXED_TYPE_FENTRY("readDouble", double, zval_double_wrapper, arginfo_read_float)
-	DEFINE_VARINT_ENTRY(32, "Int")
-	DEFINE_VARINT_ENTRY(64, "Long")
+	READ_FIXED_TYPE_FENTRY("readUnsignedShort", uint16_t, zval_long_wrapper, arginfo_read_integer)
+	READ_FIXED_TYPE_FENTRY("readShort", int16_t, zval_long_wrapper, arginfo_read_integer)
+	READ_FIXED_TYPE_FENTRY("readUnsignedInt", uint32_t, zval_long_wrapper, arginfo_read_integer)
+	READ_FIXED_TYPE_FENTRY("readInt", int32_t, zval_long_wrapper, arginfo_read_integer)
+	READ_FIXED_TYPE_FENTRY("readLong", uint64_t, zval_long_wrapper, arginfo_read_integer)
+	READ_FIXED_TYPE_FENTRY("readFloat", float, zval_double_wrapper, arginfo_read_float)
+	READ_FIXED_TYPE_FENTRY("readDouble", double, zval_double_wrapper, arginfo_read_float)
+
+	READ_VARINT_FENTRY(32, "Int", uint32_t, int32_t)
+	READ_VARINT_FENTRY(64, "Long", uint64_t, int64_t)
+
+	WRITE_FIXED_TYPE_FENTRY("writeShort", int16_t, zend_parse_parameters_long_wrapper, arginfo_write_integer)
+	WRITE_FIXED_TYPE_FENTRY("writeInt", int32_t, zend_parse_parameters_long_wrapper, arginfo_write_integer)
+	WRITE_FIXED_TYPE_FENTRY("writeLong", int64_t, zend_parse_parameters_long_wrapper, arginfo_write_integer)
+	WRITE_FIXED_TYPE_FENTRY("writeFloat", float, zend_parse_parameters_double_wrapper, arginfo_write_float)
+	WRITE_FIXED_TYPE_FENTRY("writeDouble", double, zend_parse_parameters_double_wrapper, arginfo_write_float)
+
+	WRITE_VARINT_FENTRY(32, "Int", uint32_t, int32_t)
+	WRITE_VARINT_FENTRY(64, "Long", uint64_t, int64_t)
+
 	PHP_FE_END
 };
 

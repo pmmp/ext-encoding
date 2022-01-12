@@ -138,8 +138,8 @@ struct VarIntConstants {
 	template<size_t TYPE_BITS>
 	static const unsigned char MAX_BYTES = TYPE_BITS / BITS_PER_BYTE + ((TYPE_BITS % BITS_PER_BYTE) > 0);
 
-	static const unsigned char VALUE_MASK = ~(1u << BITS_PER_BYTE);
-	static const unsigned char MSB_MASK = (1u << BITS_PER_BYTE);
+	static const unsigned char VALUE_MASK = static_cast<unsigned char>(~(1u << BITS_PER_BYTE));
+	static const unsigned char MSB_MASK = static_cast<unsigned char>(1u << BITS_PER_BYTE);
 };
 
 template<size_t TYPE_BITS, typename TValue>

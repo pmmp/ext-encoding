@@ -9,14 +9,13 @@ jobs:
   build:
     runs-on: ubuntu-20.04
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
-    name: Tests (PHP ${{ matrix.php }}, OPcache ${{ matrix.opcache }}, Valgrind ${{ matrix.valgrind }}, JIT ${{ matrix.jit }})
+    name: Tests (PHP ${{ matrix.php }}, Valgrind ${{ matrix.valgrind }}, Debug=${{ matrix.debug }})
     strategy:
       fail-fast: false
       matrix:
         php: [8.0.13, 8.1.0]
-        opcache: [0, 1]
         valgrind: [0, 1]
-        jit: [0, 1205]
+        debug: [enable, disable]
 
     steps:
       - uses: actions/checkout@v2
@@ -33,7 +32,7 @@ jobs:
         id: php-build-cache
         with:
           path: ${{ github.workspace }}/php 
-          key: php-debug-${{ matrix.php }}-valgrind-${{ matrix.valgrind }}
+          key: php-debug-${{ matrix.debug }}-${{ matrix.php }}-valgrind-${{ matrix.valgrind }}
           
       - name: Clone php-build repository
         if: steps.php-build-cache.outputs.cache-hit != 'true'
@@ -47,7 +46,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/php-build
           ./install-dependencies.sh
-          PHP_BUILD_ZTS_ENABLE=on PHP_BUILD_CONFIGURE_OPTS="$PHP_BUILD_CONFIGURE_OPTS --enable-debug" ./bin/php-build ${{ matrix.php }} $GITHUB_WORKSPACE/php
+          PHP_BUILD_ZTS_ENABLE=on PHP_BUILD_CONFIGURE_OPTS="$PHP_BUILD_CONFIGURE_OPTS --${{ matrix.debug }}-debug" ./bin/php-build ${{ matrix.php }} $GITHUB_WORKSPACE/php
 
       - name: Compile extension
         run: |
@@ -58,16 +57,6 @@ jobs:
       - name: Generate php.ini
         run: |
           echo "extension=encoding.so" > $GITHUB_WORKSPACE/php.ini
-          if [[ "${{ matrix.opcache }}" == "1" ]]; then
-            echo "Enabling OPcache"
-            echo "zend_extension=opcache.so" >> $GITHUB_WORKSPACE/php.ini
-            echo "opcache.enable=1" >> $GITHUB_WORKSPACE/php.ini
-            echo "opcache.enable_cli=1" >> $GITHUB_WORKSPACE/php.ini
-            echo "opcache.jit=${{ matrix.jit }}" >> $GITHUB_WORKSPACE/php.ini
-            echo "opcache.jit_buffer_size=128M" >> $GITHUB_WORKSPACE/php.ini
-          else
-            echo "OPcache is not enabled for this run"
-          fi
 
       - name: Run PHPT tests
         run: |

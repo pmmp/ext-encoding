@@ -1,0 +1,7 @@
+* text=auto
+*.php text eol=lf
+*.c text eol=lf
+*.cpp text eol=lf
+*.h text eol=lf
+*.m4 text eol=lf
+/config.w32 text eol=crlf

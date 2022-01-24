@@ -69,7 +69,7 @@ static inline bool handleOffsetReferenceParameter(const zval* const zoffset, zen
 		offset = static_cast<size_t>(Z_LVAL_P(Z_REFVAL_P(zoffset)));
 
 		if (offset < 0) {
-			zend_value_error("$offset expects at least 0, %zu given", offset);
+			zend_value_error("$offset expects at least 0, %zd given", offset);
 			return false;
 		}
 	}

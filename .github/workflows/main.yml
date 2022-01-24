@@ -28,5 +28,5 @@ jobs:
           ./configure
           make
 
-      #- name: Run .phpt tests
-      #  run: REPORT_EXIT_STATUS=1 NO_INTERACTION=1 TEST_PHP_ARGS="--show-diff" make test
+      - name: Run .phpt tests
+        run: REPORT_EXIT_STATUS=1 NO_INTERACTION=1 TEST_PHP_ARGS="--show-diff" make test

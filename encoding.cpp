@@ -356,6 +356,7 @@ PHP_MINIT_FUNCTION(encoding) {
 
 static const zend_module_dep module_dependencies[] = {
 	ZEND_MOD_REQUIRED("spl")
+	ZEND_MOD_END
 };
 
 /* {{{ encoding_module_entry */

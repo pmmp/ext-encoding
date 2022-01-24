@@ -58,40 +58,41 @@ static inline void zval_double_wrapper(zval* zv, TValue value) {
 	ZVAL_DOUBLE(zv, value);
 }
 
-static inline bool handleOffsetReferenceParameter(const zval* const zoffset, zend_long& offset, const zend_string* const bytes) {
+static inline bool handleOffsetReferenceParameter(const zval* const zoffset, size_t& offset, const zend_string* const bytes) {
 	if (zoffset != NULL) {
 		auto type = Z_TYPE_P(Z_REFVAL_P(zoffset));
 		if (type != IS_LONG && type != IS_NULL) {
 			zend_type_error("$offset expects int|null, %s given", zend_get_type_by_const(type));
 			return false;
 		}
+		zend_long offsetLval = Z_LVAL_P(Z_REFVAL_P(zoffset));
 
-		offset = static_cast<size_t>(Z_LVAL_P(Z_REFVAL_P(zoffset)));
-
-		if (offset < 0) {
-			zend_value_error("$offset expects at least 0, %zd given", offset);
+		if (offsetLval < 0) {
+			zend_value_error("$offset expects at least 0, %zd given", offsetLval);
 			return false;
 		}
-		if (offset >= ZSTR_LEN(bytes)) {
-			zend_value_error("$offset must be less than the length (%zd) of the input string, %zd given", ZSTR_LEN(bytes), offset);
+		if (offsetLval >= ZSTR_LEN(bytes)) {
+			zend_value_error("$offset must be less than the length (%zd) of the input string, %zd given", ZSTR_LEN(bytes), offsetLval);
 			return false;
 		}
+
+		offset = static_cast<size_t>(offsetLval);
 	}
 
 	return true;
 }
 
-static inline void setOffsetReferenceParameter(zval* const zoffset, const zend_long offset) {
+static inline void setOffsetReferenceParameter(zval* const zoffset, const size_t offset) {
 	if (zoffset != NULL) {
-		ZEND_TRY_ASSIGN_REF_LONG(zoffset, offset);
+		ZEND_TRY_ASSIGN_REF_LONG(zoffset, static_cast<zend_long>(offset));
 	}
 }
 
-template<typename TValue, bool (*readTypeFunc)(zend_string* bytes, zend_long& offset, TValue& result), void(*assignResult)(zval*, TValue)>
+template<typename TValue, bool (*readTypeFunc)(zend_string* bytes, size_t& offset, TValue& result), void(*assignResult)(zval*, TValue)>
 void ZEND_FASTCALL zif_readType(INTERNAL_FUNCTION_PARAMETERS) {
 	zend_string* bytes;
 	zval* zoffset = NULL;
-	zend_long offset = 0;
+	size_t offset = 0;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 2)
 		Z_PARAM_STR(bytes)
@@ -111,7 +112,7 @@ void ZEND_FASTCALL zif_readType(INTERNAL_FUNCTION_PARAMETERS) {
 }
 
 template<typename TValue, ByteOrder byteOrder>
-static inline bool readFixedSizeType(zend_string* bytes, zend_long& offset, TValue& result) {
+static inline bool readFixedSizeType(zend_string* bytes, size_t& offset, TValue& result) {
 
 	const auto SIZE = sizeof(TValue);
 	if (ZSTR_LEN(bytes) - offset < SIZE) {
@@ -147,7 +148,7 @@ struct VarIntConstants {
 };
 
 template<size_t TYPE_BITS, typename TValue>
-static inline bool readUnsignedVarInt(zend_string *bytes, zend_long &offset, TValue &result) {
+static inline bool readUnsignedVarInt(zend_string *bytes, size_t &offset, TValue &result) {
 	result = 0;
 	for (auto shift = 0; shift < TYPE_BITS; shift += VarIntConstants::BITS_PER_BYTE) {
 		if (offset >= ZSTR_LEN(bytes)) {
@@ -167,7 +168,7 @@ static inline bool readUnsignedVarInt(zend_string *bytes, zend_long &offset, TVa
 }
 
 template<size_t TYPE_BITS, typename TUnsignedValue, typename TSignedValue>
-static inline bool readSignedVarInt(zend_string* bytes, zend_long& offset, TSignedValue& result) {
+static inline bool readSignedVarInt(zend_string* bytes, size_t& offset, TSignedValue& result) {
 	TUnsignedValue unsignedResult;
 	if (!readUnsignedVarInt<TYPE_BITS, TUnsignedValue>(bytes, offset, unsignedResult)) {
 		return false;

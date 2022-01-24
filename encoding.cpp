@@ -323,10 +323,10 @@ PHP_RINIT_FUNCTION(encoding)
 
 zend_function_entry ext_functions[] = {
 	READ_FIXED_TYPE_FENTRY("readUnsignedShort", uint16_t, zval_long_wrapper, arginfo_read_integer)
-	READ_FIXED_TYPE_FENTRY("readShort", int16_t, zval_long_wrapper, arginfo_read_integer)
+	READ_FIXED_TYPE_FENTRY("readSignedShort", int16_t, zval_long_wrapper, arginfo_read_integer)
 	READ_FIXED_TYPE_FENTRY("readUnsignedInt", uint32_t, zval_long_wrapper, arginfo_read_integer)
-	READ_FIXED_TYPE_FENTRY("readInt", int32_t, zval_long_wrapper, arginfo_read_integer)
-	READ_FIXED_TYPE_FENTRY("readLong", uint64_t, zval_long_wrapper, arginfo_read_integer)
+	READ_FIXED_TYPE_FENTRY("readSignedInt", int32_t, zval_long_wrapper, arginfo_read_integer)
+	READ_FIXED_TYPE_FENTRY("readSignedLong", uint64_t, zval_long_wrapper, arginfo_read_integer)
 	READ_FIXED_TYPE_FENTRY("readFloat", float, zval_double_wrapper, arginfo_read_float)
 	READ_FIXED_TYPE_FENTRY("readDouble", double, zval_double_wrapper, arginfo_read_float)
 

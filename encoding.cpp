@@ -111,7 +111,7 @@ static inline bool readFixedSizeType(zend_string* bytes, zend_long& offset, TVal
 
 	const auto SIZE = sizeof(TValue);
 	if (ZSTR_LEN(bytes) - offset < SIZE) {
-		zend_throw_exception_ex(data_decode_exception_ce, 0, "Need at least %zu bytes, but only have %zu bytes", SIZE, ZSTR_LEN(bytes));
+		zend_throw_exception_ex(data_decode_exception_ce, 0, "Need at least %zu bytes, but only have %zu bytes", SIZE, ZSTR_LEN(bytes) - offset);
 		return false;
 	}
 

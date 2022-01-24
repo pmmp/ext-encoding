@@ -354,9 +354,15 @@ PHP_MINIT_FUNCTION(encoding) {
 	return SUCCESS;
 }
 
+static const zend_module_dep module_dependencies[] = {
+	ZEND_MOD_REQUIRED("spl")
+};
+
 /* {{{ encoding_module_entry */
 zend_module_entry encoding_module_entry = {
-	STANDARD_MODULE_HEADER,
+	STANDARD_MODULE_HEADER_EX,
+	NULL, /* ini_entries */
+	module_dependencies,
 	"encoding",					/* Extension name */
 	ext_functions,					/* zend_function_entry */
 	PHP_MINIT(encoding),			/* PHP_MINIT - Module initialization */

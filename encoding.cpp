@@ -58,7 +58,7 @@ static inline void zval_double_wrapper(zval* zv, TValue value) {
 	ZVAL_DOUBLE(zv, value);
 }
 
-static inline bool handleOffsetReferenceParameter(const zval* const zoffset, zend_long& offset) {
+static inline bool handleOffsetReferenceParameter(const zval* const zoffset, zend_long& offset, const zend_string* const bytes) {
 	if (zoffset != NULL) {
 		auto type = Z_TYPE_P(Z_REFVAL_P(zoffset));
 		if (type != IS_LONG && type != IS_NULL) {
@@ -70,6 +70,10 @@ static inline bool handleOffsetReferenceParameter(const zval* const zoffset, zen
 
 		if (offset < 0) {
 			zend_value_error("$offset expects at least 0, %zd given", offset);
+			return false;
+		}
+		if (offset >= ZSTR_LEN(bytes)) {
+			zend_value_error("$offset must be less than the length (%zd) of the input string, %zd given", ZSTR_LEN(bytes), offset);
 			return false;
 		}
 	}
@@ -95,7 +99,7 @@ void ZEND_FASTCALL zif_readType(INTERNAL_FUNCTION_PARAMETERS) {
 		Z_PARAM_ZVAL(zoffset)
 	ZEND_PARSE_PARAMETERS_END();
 
-	if (!handleOffsetReferenceParameter(zoffset, offset)) {
+	if (!handleOffsetReferenceParameter(zoffset, offset, bytes)) {
 		return;
 	}
 

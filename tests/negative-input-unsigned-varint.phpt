@@ -15,6 +15,8 @@ treated as unsigned. This means that -1 written as a varint32 will be interprete
 In the varint64 case we would not truncate, but still interpret the number as its unsigned counterpart during writing.
 However, during decoding this would lead to the MSB being interpreted as a sign bit, which also happens for actual
 unsigned numbers. Due to the lack of unsigned types in PHP, there isn't much that can be done about this.
+--EXTENSIONS--
+encoding
 --FILE--
 <?php
 

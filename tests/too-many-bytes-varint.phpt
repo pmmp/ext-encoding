@@ -8,6 +8,8 @@ However, this means that it's possible for a string of bytes longer than the max
 potentially locking up the read for a long time if the max number of bytes isn't capped.
 
 This test verifies that the varint reader functions bail out if there are too many consecutive bytes with MSB set.
+--EXTENSIONS--
+encoding
 --FILE--
 <?php
 

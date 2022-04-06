@@ -11,12 +11,16 @@ function test(\Closure $c, string $buffer) : void{
 	$offset = 0;
 	$normalValue = $c($buffer, $offset);
 
+	$offset = 0;
+	$noOffsetValue = $c($buffer);
+
 	$offset = $paddingSize;
 	$paddedValue = $c($paddedBuffer, $offset);
 
 	$offset = $paddingSize - 1;
 	$paddedBadValue = $c($paddedBuffer, $offset);
 
+	var_dump($normalValue === $noOffsetValue); //true
 	var_dump($normalValue === $paddedValue); //true
 	var_dump($normalValue === $paddedBadValue); //false
 }
@@ -29,30 +33,44 @@ foreach($functions as $function => $size){
 
 --EXPECT--
 bool(true)
-bool(false)
 bool(true)
 bool(false)
 bool(true)
-bool(false)
 bool(true)
 bool(false)
 bool(true)
-bool(false)
 bool(true)
 bool(false)
 bool(true)
-bool(false)
 bool(true)
 bool(false)
 bool(true)
-bool(false)
 bool(true)
 bool(false)
 bool(true)
-bool(false)
 bool(true)
 bool(false)
 bool(true)
+bool(true)
 bool(false)
+bool(true)
+bool(true)
+bool(false)
+bool(true)
+bool(true)
+bool(false)
+bool(true)
+bool(true)
+bool(false)
+bool(true)
+bool(true)
+bool(false)
+bool(true)
+bool(true)
+bool(false)
+bool(true)
+bool(true)
+bool(false)
+bool(true)
 bool(true)
 bool(false)

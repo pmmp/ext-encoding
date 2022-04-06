@@ -5,27 +5,10 @@ encoding
 --FILE--
 <?php
 
-$functions = [
-	'readUnsignedShortLE',
-	'readSignedShortLE',
-	'readUnsignedShortBE',
-	'readSignedShortBE',
-
-	'readUnsignedIntLE',
-	'readSignedIntLE',
-	'readFloatLE',
-	'readUnsignedIntBE',
-	'readSignedIntBE',
-	'readFloatBE',
-
-	'readSignedLongLE',
-	'readSignedLongBE',
-	'readDoubleLE',
-	'readDoubleBE',
-];
+$functions = require __DIR__ . '/fixed-size-types.inc';
 
 $test = str_repeat("\x00", 16);
-foreach($functions as $function){
+foreach($functions as $function => $buf){
 	try{
 		$function("\x00");
 	}catch(DataDecodeException $e){

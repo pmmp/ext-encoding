@@ -14,27 +14,10 @@ function test(\Closure $c, int $size) : void{
 	var_dump($offset === $originalOffset + $size);
 }
 
-$functions = [
-	'readUnsignedShortLE' => 2,
-	'readSignedShortLE' => 2,
-	'readUnsignedShortBE' => 2,
-	'readSignedShortBE' => 2,
+$functions = require __DIR__ . '/fixed-size-types.inc';
 
-	'readUnsignedIntLE' => 4,
-	'readSignedIntLE' => 4,
-	'readFloatLE' => 4,
-	'readUnsignedIntBE' => 4,
-	'readSignedIntBE' => 4,
-	'readFloatBE' => 4,
-
-	'readSignedLongLE' => 8,
-	'readSignedLongBE' => 8,
-	'readDoubleLE' => 8,
-	'readDoubleBE' => 8,
-];
-
-foreach($functions as $function => $size){
-	test(\Closure::fromCallable($function), $size);
+foreach($functions as $function => $buf){
+	test(\Closure::fromCallable($function), strlen($buf));
 }
 
 ?>

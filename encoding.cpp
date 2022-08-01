@@ -267,7 +267,7 @@ void ZEND_FASTCALL zif_writeType(INTERNAL_FUNCTION_PARAMETERS) {
 	setOffsetReferenceParameter(zoffset, offset, object->offset);
 }
 
-static inline zend_string* extend_buffer(zend_string* buffer, size_t offset, size_t usedBytes) {
+static inline zend_string* extendBuffer(zend_string* buffer, size_t offset, size_t usedBytes) {
 	size_t requiredSize = offset + usedBytes;
 	if (ZSTR_LEN(buffer) < requiredSize) {
 		//TODO: this will result in linear allocations once the buffer size is exceeded, which will cause a slowdown
@@ -278,7 +278,7 @@ static inline zend_string* extend_buffer(zend_string* buffer, size_t offset, siz
 }
 
 static zend_string* writeByte(zend_string* buffer, size_t& offset, int8_t value) {
-	buffer = extend_buffer(buffer, offset, sizeof(int8_t));
+	buffer = extendBuffer(buffer, offset, sizeof(int8_t));
 
 	ZSTR_VAL(buffer)[offset] = *reinterpret_cast<char*>(&value);
 
@@ -289,7 +289,7 @@ static zend_string* writeByte(zend_string* buffer, size_t& offset, int8_t value)
 
 template<typename TValue, ByteOrder byteOrder>
 static zend_string* writeFixedSizeType(zend_string* buffer, size_t& offset, TValue value) {
-	buffer = extend_buffer(buffer, offset, sizeof(TValue));
+	buffer = extendBuffer(buffer, offset, sizeof(TValue));
 
 	if (byteOrder == ByteOrder::Native) {
 		memcpy(&ZSTR_VAL(buffer)[offset], reinterpret_cast<const char*>(&value), sizeof(TValue));
@@ -322,7 +322,7 @@ static inline zend_string* writeUnsignedVarInt(zend_string* buffer, size_t& offs
 			result[i] = nextByte;
 
 			auto usedBytes = i + 1;
-			buffer = extend_buffer(buffer, offset, usedBytes);
+			buffer = extendBuffer(buffer, offset, usedBytes);
 			memcpy(&ZSTR_VAL(buffer)[offset], &result[0], usedBytes);
 			offset += usedBytes;
 

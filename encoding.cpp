@@ -450,7 +450,7 @@ static PHP_METHOD(ByteBuffer, __serialize) {
 	add_assoc_long(return_value, "offset", object->offset);
 }
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer___unserialize, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer___unserialize, 0, 1, IS_VOID, 0)
 	ZEND_ARG_ARRAY_INFO(0, data, 0)
 ZEND_END_ARG_INFO()
 

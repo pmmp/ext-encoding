@@ -81,7 +81,7 @@ static inline bool handleOffsetReferenceParameter(const zval* const zoffset, siz
 			zend_value_error("$offset expects at least 0, %zd given", offsetLval);
 			return false;
 		}
-		if (bytes != NULL && offsetLval >= ZSTR_LEN(bytes)) {
+		if (bytes != NULL && static_cast<size_t>(offsetLval) >= ZSTR_LEN(bytes)) {
 			zend_value_error("$offset must be less than the length (%zd) of the input string, %zd given", ZSTR_LEN(bytes), offsetLval);
 			return false;
 		}
@@ -444,7 +444,7 @@ static PHP_METHOD(ByteBuffer, setOffset) {
 	ZEND_PARSE_PARAMETERS_END();
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
-	if (offset < 0 || offset >= ZSTR_LEN(object->buffer)) {
+	if (offset < 0 || static_cast<size_t>(offset) >= ZSTR_LEN(object->buffer)) {
 		zend_value_error("Offset must not be less than zero or greater than the buffer size");
 		return;
 	}

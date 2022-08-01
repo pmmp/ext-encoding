@@ -20,9 +20,15 @@ encoding
 --FILE--
 <?php
 
-var_dump(readUnsignedVarInt(writeUnsignedVarInt(-1)));
+$buffer = new ByteBuffer("");
+$buffer->writeUnsignedVarInt(-1);
+$offset = 0;
+var_dump($buffer->readUnsignedVarInt($offset));
 
-var_dump(readUnsignedVarLong(writeUnsignedVarLong(-1)));
+$buffer->rewind();
+$buffer->writeUnsignedVarLong(-1);
+$offset = 0;
+var_dump($buffer->readUnsignedVarLong($offset));
 
 ?>
 --EXPECT--

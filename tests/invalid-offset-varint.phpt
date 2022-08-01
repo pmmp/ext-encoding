@@ -5,24 +5,24 @@ encoding
 --FILE--
 <?php
 
-function test(\Closure $c) : void{
+function test(string $function) : void{
 	try{
 		$offset = 4;
-		$c("\x00", $offset);
+		(new ByteBuffer("\x00"))->$function($offset);
 	}catch(ValueError $e){
 		echo "offset larger than buffer size: " . $e->getMessage() . "\n";
 	}
 
 	try{
 		$offset = -4;
-		$c("\x00", $offset);
+		(new ByteBuffer("\x00"))->$function($offset);
 	}catch(ValueError $e){
 		echo "offset negative: " . $e->getMessage() . "\n";
 	}
 
 	try{
 		$offset = "1";
-		$c("\x00", $offset);
+		(new ByteBuffer("\x00"))->$function($offset);
 	}catch(TypeError $e){
 		echo "wrong type offset: " . $e->getMessage() . "\n";
 	}
@@ -30,10 +30,10 @@ function test(\Closure $c) : void{
 	echo "\n";
 }
 
-test(\Closure::fromCallable('readUnsignedVarInt'));
-test(\Closure::fromCallable('readSignedVarInt'));
-test(\Closure::fromCallable('readUnsignedVarLong'));
-test(\Closure::fromCallable('readSignedVarLong'));
+test('readUnsignedVarInt');
+test('readSignedVarInt');
+test('readUnsignedVarLong');
+test('readSignedVarLong');
 
 ?>
 --EXPECT--

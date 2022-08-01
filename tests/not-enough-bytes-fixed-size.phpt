@@ -10,14 +10,16 @@ $functions = require __DIR__ . '/fixed-size-types.inc';
 $test = str_repeat("\x00", 16);
 foreach($functions as $function => $buf){
 	try{
-		$function("\x00");
+		$buffer = new ByteBuffer("\x00");
+		$buffer->$function();
 	}catch(DataDecodeException $e){
 		echo "$function no offset: " . $e->getMessage() . "\n";
 	}
 
 	$offset = 15;
 	try{
-		$function($test, $offset);
+		$buffer = new ByteBuffer($test);
+		$buffer->$function($offset);
 	}catch(DataDecodeException $e){
 		echo "$function with offset: " . $e->getMessage() . "\n";
 	}

@@ -5,19 +5,19 @@ encoding
 --FILE--
 <?php
 
-function test(\Closure $c, int $size) : void{
+function test(string $function, int $size) : void{
 	$offset = $size;
 	$originalOffset = $offset;
 	$buffer = str_repeat("\x00", $size * 3);
 
-	$c($buffer, $offset);
+	(new ByteBuffer($buffer))->$function($offset);
 	var_dump($offset === $originalOffset + $size);
 }
 
 $functions = require __DIR__ . '/fixed-size-types.inc';
 
 foreach($functions as $function => $buf){
-	test(\Closure::fromCallable($function), strlen($buf));
+	test($function, strlen($buf));
 }
 
 ?>

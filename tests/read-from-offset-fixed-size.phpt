@@ -3,22 +3,22 @@ read*() must read from the offset given, or the start if none
 --FILE--
 <?php
 
-function test(\Closure $c, string $buffer) : void{
+function test(string $function, string $buffer) : void{
 	$paddingSize = 4;
 	$paddedBuffer = str_repeat("\x00", $paddingSize) . $buffer;
 
 
 	$offset = 0;
-	$normalValue = $c($buffer, $offset);
+	$normalValue = (new ByteBuffer($buffer))->$function($offset);
 
 	$offset = 0;
-	$noOffsetValue = $c($buffer);
+	$noOffsetValue = (new ByteBuffer($buffer))->$function();
 
 	$offset = $paddingSize;
-	$paddedValue = $c($paddedBuffer, $offset);
+	$paddedValue = (new ByteBuffer($paddedBuffer))->$function($offset);
 
 	$offset = $paddingSize - 1;
-	$paddedBadValue = $c($paddedBuffer, $offset);
+	$paddedBadValue = (new ByteBuffer($paddedBuffer))->$function($offset);
 
 	var_dump($normalValue === $noOffsetValue); //true
 	var_dump($normalValue === $paddedValue); //true
@@ -28,7 +28,7 @@ function test(\Closure $c, string $buffer) : void{
 $functions = require __DIR__ . '/fixed-size-types.inc';
 
 foreach($functions as $function => $size){
-	test(\Closure::fromCallable($function), $size);
+	test($function, $size);
 }
 
 --EXPECT--

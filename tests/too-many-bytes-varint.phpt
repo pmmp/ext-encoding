@@ -17,25 +17,25 @@ $shortBuf = str_repeat("\x80", 6);
 $longBuf = str_repeat("\x80", 11);
 
 try{
-	readUnsignedVarInt($shortBuf);
+	(new ByteBuffer($shortBuf))->readUnsignedVarInt();
 }catch(DataDecodeException $e){
 	echo "uv32: " . $e->getMessage() . PHP_EOL;
 }
 
 try{
-	readSignedVarInt($shortBuf);
+	(new ByteBuffer($shortBuf))->readSignedVarInt();
 }catch(DataDecodeException $e){
 	echo "sv32: " . $e->getMessage() . PHP_EOL;
 }
 
 try{
-	readUnsignedVarLong($longBuf);
+	(new ByteBuffer($longBuf))->readUnsignedVarLong();
 }catch(DataDecodeException $e){
 	echo "uv64: " . $e->getMessage() . PHP_EOL;
 }
 
 try{
-	readSignedVarLong($longBuf);
+	(new ByteBuffer($longBuf))->readSignedVarLong();
 }catch(DataDecodeException $e){
 	echo "sv64: " . $e->getMessage() . PHP_EOL;
 }

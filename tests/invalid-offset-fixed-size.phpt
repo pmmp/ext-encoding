@@ -5,24 +5,24 @@ encoding
 --FILE--
 <?php
 
-function test(\Closure $c) : void{
+function test(string $function) : void{
 	try{
 		$offset = 4;
-		$c("\x00", $offset);
+		(new ByteBuffer("\x00"))->$function($offset);
 	}catch(ValueError $e){
 		echo "offset larger than buffer size: " . $e->getMessage() . "\n";
 	}
 
 	try{
 		$offset = -4;
-		$c("\x00", $offset);
+		(new ByteBuffer("\x00"))->$function($offset);
 	}catch(ValueError $e){
 		echo "offset negative: " . $e->getMessage() . "\n";
 	}
 
 	try{
 		$offset = "1";
-		$c("\x00", $offset);
+		(new ByteBuffer("\x00"))->$function($offset);
 	}catch(TypeError $e){
 		echo "wrong type offset: " . $e->getMessage() . "\n";
 	}
@@ -49,9 +49,8 @@ $functions = [
 	'readDoubleBE',
 ];
 
-$test = str_repeat("\x00", 16);
 foreach($functions as $function){
-	test(\Closure::fromCallable($function));
+	test($function);
 }
 
 ?>

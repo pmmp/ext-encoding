@@ -5,16 +5,18 @@ encoding
 --FILE--
 <?php
 
-function test(\Closure $c) : void{
+function test(string $function) : void{
+	$buffer = new ByteBuffer("\x80");
 	try{
-		$c("\x80");
+		$buffer->$function();
 	}catch(DataDecodeException $e){
 		echo "no offset, not enough bytes: " . $e->getMessage() . "\n";
 	}
 
+	$buffer = new ByteBuffer("\x00\x00\x00\x00\x80");
 	try{
 		$offset = 4;
-		$c("\x00\x00\x00\x00\x80", $offset);
+		$buffer->$function($offset);
 	}catch(DataDecodeException $e){
 		echo "offset valid, not enough bytes: " . $e->getMessage() . "\n";
 	}
@@ -22,10 +24,10 @@ function test(\Closure $c) : void{
 	echo "\n";
 }
 
-test(\Closure::fromCallable('readUnsignedVarInt'));
-test(\Closure::fromCallable('readSignedVarInt'));
-test(\Closure::fromCallable('readUnsignedVarLong'));
-test(\Closure::fromCallable('readSignedVarLong'));
+test('readUnsignedVarInt');
+test('readSignedVarInt');
+test('readUnsignedVarLong');
+test('readSignedVarLong');
 
 ?>
 --EXPECT--

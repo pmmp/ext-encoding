@@ -154,7 +154,7 @@ static inline bool readFixedSizeType(zend_string* bytes, size_t& offset, TValue&
 		//endian flip
 		Flipper<TValue> flipper;
 
-		for (auto i = 0; i < sizeof(TValue); i++) {
+		for (unsigned int i = 0; i < sizeof(TValue); i++) {
 			flipper.bytes[sizeof(TValue) - i - 1] = ZSTR_VAL(bytes)[i + offset];
 		}
 
@@ -178,7 +178,7 @@ struct VarIntConstants {
 template<size_t TYPE_BITS, typename TValue>
 static inline bool readUnsignedVarInt(zend_string *bytes, size_t& offset, TValue &result) {
 	result = 0;
-	for (auto shift = 0; shift < TYPE_BITS; shift += VarIntConstants::BITS_PER_BYTE) {
+	for (unsigned int shift = 0; shift < TYPE_BITS; shift += VarIntConstants::BITS_PER_BYTE) {
 		if (offset >= ZSTR_LEN(bytes)) {
 			zend_throw_exception(data_decode_exception_ce, "No bytes left in buffer", 0);
 			return false;
@@ -253,7 +253,6 @@ void ZEND_FASTCALL zif_writeType(INTERNAL_FUNCTION_PARAMETERS) {
 	TValue value;
 	zval* zoffset = NULL;
 	size_t offset;
-	zend_string* result;
 	byte_buffer_zend_object* object;
 
 	object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
@@ -299,7 +298,7 @@ static zend_string* writeFixedSizeType(zend_string* buffer, size_t& offset, TVal
 		Flipper<TValue> flipper;
 		flipper.value = value;
 
-		for (auto i = 0; i < sizeof(TValue); i++) {
+		for (unsigned int i = 0; i < sizeof(TValue); i++) {
 			ZSTR_VAL(buffer)[i + offset] = flipper.bytes[sizeof(TValue) - i - 1];
 		}
 	}

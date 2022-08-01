@@ -275,6 +275,8 @@ static inline zend_string* extendBuffer(zend_string* buffer, size_t offset, size
 		buffer = zend_string_extend(buffer, requiredSize, 0);
 		ZSTR_VAL(buffer)[requiredSize] = '\0'; //make sure null terminator is always set, to stop sprintf reading out-of-bounds
 	}
+
+	return buffer;
 }
 
 static zend_string* writeByte(zend_string* buffer, size_t& offset, int8_t value) {

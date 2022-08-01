@@ -3,5 +3,5 @@ ARG_ENABLE('encoding', 'encoding support', 'no');
 if (PHP_ENCODING != 'no') {
 	AC_DEFINE('HAVE_ENCODING', 1, 'encoding support enabled');
 
-	EXTENSION('encoding', 'encoding.cpp', null, '/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1');
+	EXTENSION('encoding', 'encoding.cpp', null, '/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1 /permissive-');
 }

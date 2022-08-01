@@ -254,14 +254,19 @@ void ZEND_FASTCALL zif_writeType(INTERNAL_FUNCTION_PARAMETERS) {
 	setOffsetReferenceParameter(zoffset, offset, object->offset);
 }
 
-template<typename TValue, ByteOrder byteOrder>
-static zend_string* writeFixedSizeType(zend_string* buffer, size_t& offset, TValue value) {
-	zend_ulong required_size = offset + sizeof(TValue);
-	if (required_size > ZSTR_LEN(buffer)) {
+static inline zend_string* extend_buffer(zend_string* buffer, size_t offset, size_t usedBytes) {
+	size_t requiredSize = offset + usedBytes;
+	if (ZSTR_LEN(buffer) < requiredSize) {
 		//TODO: this will result in linear allocations once the buffer size is exceeded, which will cause a slowdown
 		//we should do a std::vector style size doubling or something like that
-		buffer = zend_string_extend(buffer, required_size, 0);
+		buffer = zend_string_extend(buffer, requiredSize, 0);
+		ZSTR_VAL(buffer)[requiredSize] = '\0'; //make sure null terminator is always set, to stop sprintf reading out-of-bounds
 	}
+}
+
+template<typename TValue, ByteOrder byteOrder>
+static zend_string* writeFixedSizeType(zend_string* buffer, size_t& offset, TValue value) {
+	buffer = extend_buffer(buffer, offset, sizeof(TValue));
 
 	if (byteOrder == ByteOrder::Native) {
 		memcpy(&ZSTR_VAL(buffer)[offset], reinterpret_cast<const char*>(&value), sizeof(TValue));
@@ -294,11 +299,7 @@ static inline zend_string* writeUnsignedVarInt(zend_string* buffer, size_t& offs
 			result[i] = nextByte;
 
 			auto usedBytes = i + 1;
-			zend_ulong requiredSize = offset + usedBytes;
-			if (ZSTR_LEN(buffer) < requiredSize) {
-				buffer = zend_string_extend(buffer, requiredSize, 0);
-				ZSTR_VAL(buffer)[offset + usedBytes] = '\0'; //make sure null terminator is always set - technically this isn't actually very useful, but it'll stop sprintf reading out-of-bounds
-			}
+			buffer = extend_buffer(buffer, offset, usedBytes);
 			memcpy(&ZSTR_VAL(buffer)[offset], &result[0], usedBytes);
 			offset += usedBytes;
 

@@ -1,6 +1,7 @@
 # ext-encoding
 High-performance specialized replacements for PHP's pack() and unpack() functions
 
+**This extension is EXPERIMENTAL and is not yet complete.**
 ## VarInts
 VarInts are heavily used by the Bedrock protocol, the theory being to reduce the size of integer types on the wire.
 This format is borrowed from [protobuf](https://developers.google.com/protocol-buffers/docs/encoding).

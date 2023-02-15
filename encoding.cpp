@@ -558,6 +558,16 @@ static PHP_METHOD(ByteBuffer, reserve) {
 	object->buffer = extendBuffer(object->buffer, static_cast<size_t>(zlength), 0);
 }
 
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_trim, 0, 0, IS_VOID, 0)
+ZEND_END_ARG_INFO()
+
+static PHP_METHOD(ByteBuffer, trim) {
+	zend_parse_parameters_none_throw();
+
+	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
+	object->buffer = zend_string_truncate(object->buffer, object->used, 0);
+}
+
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_rewind, 0, 0, IS_VOID, 0)
 ZEND_END_ARG_INFO()
 
@@ -695,6 +705,8 @@ static zend_function_entry byte_buffer_methods[] = {
 
 	PHP_ME(ByteBuffer, getReserved, ByteBuffer_getReserved, ZEND_ACC_PUBLIC)
 	PHP_ME(ByteBuffer, reserve, ByteBuffer_reserve, ZEND_ACC_PUBLIC)
+
+	PHP_ME(ByteBuffer, trim, ByteBuffer_trim, ZEND_ACC_PUBLIC)
 
 	PHP_ME(ByteBuffer, rewind, ByteBuffer_rewind, ZEND_ACC_PUBLIC)
 

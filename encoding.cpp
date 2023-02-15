@@ -528,6 +528,35 @@ static PHP_METHOD(ByteBuffer, setOffset) {
 	object->offset = static_cast<size_t>(offset);
 }
 
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_getReserved, 0, 0, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+
+static PHP_METHOD(ByteBuffer, getReserved) {
+	zend_parse_parameters_none_throw();
+
+	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
+	RETURN_LONG(ZSTR_LEN(object->buffer));
+}
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_reserve, 0, 1, IS_VOID, 0)
+	ZEND_ARG_TYPE_INFO(0, length, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+
+static PHP_METHOD(ByteBuffer, reserve) {
+	zend_long zlength;
+
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
+		Z_PARAM_LONG(zlength)
+	ZEND_PARSE_PARAMETERS_END();
+
+	if (zlength <= 0) {
+		zend_value_error("Length must be greater than zero");
+		return;
+	}
+	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
+	object->buffer = extendBuffer(object->buffer, static_cast<size_t>(zlength), 0);
+}
+
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_rewind, 0, 0, IS_VOID, 0)
 ZEND_END_ARG_INFO()
 
@@ -662,6 +691,9 @@ static zend_function_entry byte_buffer_methods[] = {
 
 	PHP_ME(ByteBuffer, getOffset, ByteBuffer_getOffset, ZEND_ACC_PUBLIC)
 	PHP_ME(ByteBuffer, setOffset, ByteBuffer_setOffset, ZEND_ACC_PUBLIC)
+
+	PHP_ME(ByteBuffer, getReserved, ByteBuffer_getReserved, ZEND_ACC_PUBLIC)
+	PHP_ME(ByteBuffer, reserve, ByteBuffer_reserve, ZEND_ACC_PUBLIC)
 
 	PHP_ME(ByteBuffer, rewind, ByteBuffer_rewind, ZEND_ACC_PUBLIC)
 

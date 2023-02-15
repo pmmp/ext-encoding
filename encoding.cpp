@@ -69,7 +69,7 @@ static inline void zval_double_wrapper(zval* zv, TValue value) {
 	ZVAL_DOUBLE(zv, value);
 }
 
-static inline bool handleOffsetReferenceParameter(const zval* const zoffset, size_t& offset, const zend_string* const bytes, size_t defaultOffset) {
+static inline bool handleOffsetReferenceParameter(const zval* const zoffset, size_t& offset, const zend_string* const bytes, size_t defaultOffset, size_t used) {
 	if (zoffset != NULL) {
 		auto type = Z_TYPE_P(Z_REFVAL_P(zoffset));
 		if (type != IS_LONG && type != IS_NULL) {
@@ -82,8 +82,8 @@ static inline bool handleOffsetReferenceParameter(const zval* const zoffset, siz
 			zend_value_error("$offset expects at least 0, %zd given", offsetLval);
 			return false;
 		}
-		if (bytes != NULL && static_cast<size_t>(offsetLval) >= ZSTR_LEN(bytes)) {
-			zend_value_error("$offset must be less than the length (%zd) of the input string, %zd given", ZSTR_LEN(bytes), offsetLval);
+		if (bytes != NULL && static_cast<size_t>(offsetLval) >= used) {
+			zend_value_error("$offset must be less than the length (%zd) of the input string, %zd given", used, offsetLval);
 			return false;
 		}
 
@@ -106,7 +106,7 @@ static inline void setOffsetReferenceParameter(zval* const zoffset, const size_t
 	}
 }
 
-template<typename TValue, bool (*readTypeFunc)(zend_string* bytes, size_t& offset, TValue& result), void(*assignResult)(zval*, TValue)>
+template<typename TValue, bool (*readTypeFunc)(zend_string* bytes, size_t used, size_t& offset, TValue& result), void(*assignResult)(zval*, TValue)>
 void ZEND_FASTCALL zif_readType(INTERNAL_FUNCTION_PARAMETERS) {
 	zval* zoffset = NULL;
 	size_t offset = 0;
@@ -119,22 +119,22 @@ void ZEND_FASTCALL zif_readType(INTERNAL_FUNCTION_PARAMETERS) {
 
 
 	object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
-	if (!handleOffsetReferenceParameter(zoffset, offset, object->buffer, object->offset)) {
+	if (!handleOffsetReferenceParameter(zoffset, offset, object->buffer, object->offset, object->used)) {
 		return;
 	}
 
 	TValue result;
-	if (readTypeFunc(object->buffer, offset, result)) {
+	if (readTypeFunc(object->buffer, object->used, offset, result)) {
 		setOffsetReferenceParameter(zoffset, offset, object->offset, object->used);
 		assignResult(return_value, result);
 	}
 }
 
 template<typename TValue>
-static inline bool readByte(zend_string* buffer, size_t& offset, TValue& result) {
+static inline bool readByte(zend_string* buffer, size_t used, size_t& offset, TValue& result) {
 	const auto SIZE = sizeof(TValue);
-	if (ZSTR_LEN(buffer) - offset < SIZE) {
-		zend_throw_exception_ex(data_decode_exception_ce, 0, "Need at least %zu bytes, but only have %zu bytes", SIZE, ZSTR_LEN(buffer) - offset);
+	if (used - offset < SIZE) {
+		zend_throw_exception_ex(data_decode_exception_ce, 0, "Need at least %zu bytes, but only have %zu bytes", SIZE, used - offset);
 		return false;
 	}
 
@@ -144,11 +144,11 @@ static inline bool readByte(zend_string* buffer, size_t& offset, TValue& result)
 	return true;
 }
 template<typename TValue, ByteOrder byteOrder>
-static inline bool readFixedSizeType(zend_string* bytes, size_t& offset, TValue& result) {
+static inline bool readFixedSizeType(zend_string* bytes, size_t used, size_t& offset, TValue& result) {
 
 	const auto SIZE = sizeof(TValue);
-	if (ZSTR_LEN(bytes) - offset < SIZE) {
-		zend_throw_exception_ex(data_decode_exception_ce, 0, "Need at least %zu bytes, but only have %zu bytes", SIZE, ZSTR_LEN(bytes) - offset);
+	if (used - offset < SIZE) {
+		zend_throw_exception_ex(data_decode_exception_ce, 0, "Need at least %zu bytes, but only have %zu bytes", SIZE, used - offset);
 		return false;
 	}
 
@@ -180,10 +180,10 @@ struct VarIntConstants {
 };
 
 template<size_t TYPE_BITS, typename TValue>
-static inline bool readUnsignedVarInt(zend_string *bytes, size_t& offset, TValue &result) {
+static inline bool readUnsignedVarInt(zend_string *bytes, size_t used, size_t& offset, TValue &result) {
 	result = 0;
 	for (unsigned int shift = 0; shift < TYPE_BITS; shift += VarIntConstants::BITS_PER_BYTE) {
-		if (offset >= ZSTR_LEN(bytes)) {
+		if (offset >= used) {
 			zend_throw_exception(data_decode_exception_ce, "No bytes left in buffer", 0);
 			return false;
 		}
@@ -200,9 +200,9 @@ static inline bool readUnsignedVarInt(zend_string *bytes, size_t& offset, TValue
 }
 
 template<size_t TYPE_BITS, typename TUnsignedValue, typename TSignedValue>
-static inline bool readSignedVarInt(zend_string* bytes, size_t& offset, TSignedValue& result) {
+static inline bool readSignedVarInt(zend_string* bytes, size_t used, size_t& offset, TSignedValue& result) {
 	TUnsignedValue unsignedResult;
-	if (!readUnsignedVarInt<TYPE_BITS, TUnsignedValue>(bytes, offset, unsignedResult)) {
+	if (!readUnsignedVarInt<TYPE_BITS, TUnsignedValue>(bytes, used, offset, unsignedResult)) {
 		return false;
 	}
 
@@ -262,7 +262,7 @@ void ZEND_FASTCALL zif_writeType(INTERNAL_FUNCTION_PARAMETERS) {
 	object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
 
 	//offsets beyond the end of the buffer are allowed, and result in automatic buffer extension
-	if (!parseParametersFunc(execute_data, zoffset, value) || !handleOffsetReferenceParameter(zoffset, offset, NULL, object->offset)) {
+	if (!parseParametersFunc(execute_data, zoffset, value) || !handleOffsetReferenceParameter(zoffset, offset, NULL, object->offset, object->used)) {
 		return;
 	}
 
@@ -457,12 +457,12 @@ static PHP_METHOD(ByteBuffer, readByteArray) {
 	size_t length = static_cast<size_t>(zlength);
 
 	object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
-	if (!handleOffsetReferenceParameter(zoffset, offset, object->buffer, object->offset)) {
+	if (!handleOffsetReferenceParameter(zoffset, offset, object->buffer, object->offset, object->used)) {
 		return;
 	}
 
-	if (ZSTR_LEN(object->buffer) - offset < length) {
-		zend_throw_exception_ex(data_decode_exception_ce, 0, "Need at least %zu bytes, but only have %zu bytes", length, ZSTR_LEN(object->buffer) - offset);
+	if (object->used - offset < length) {
+		zend_throw_exception_ex(data_decode_exception_ce, 0, "Need at least %zu bytes, but only have %zu bytes", length, object->used - offset);
 		return;
 	}
 
@@ -490,7 +490,7 @@ static PHP_METHOD(ByteBuffer, writeByteArray) {
 
 
 	object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
-	if (!handleOffsetReferenceParameter(zoffset, offset, NULL, object->offset)) {
+	if (!handleOffsetReferenceParameter(zoffset, offset, NULL, object->offset, object->used)) {
 		return;
 	}
 
@@ -521,7 +521,7 @@ static PHP_METHOD(ByteBuffer, setOffset) {
 	ZEND_PARSE_PARAMETERS_END();
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
-	if (offset < 0 || static_cast<size_t>(offset) >= ZSTR_LEN(object->buffer)) {
+	if (offset < 0 || static_cast<size_t>(offset) >= object->used) {
 		zend_value_error("Offset must not be less than zero or greater than the buffer size");
 		return;
 	}

@@ -49,6 +49,7 @@ static zend_object_handlers byte_buffer_zend_object_handlers;
 typedef struct _byte_buffer_zend_object {
 	zend_string* buffer;
 	size_t offset;
+	size_t used;
 	zend_object std;
 } byte_buffer_zend_object;
 
@@ -94,11 +95,14 @@ static inline bool handleOffsetReferenceParameter(const zval* const zoffset, siz
 	return true;
 }
 
-static inline void setOffsetReferenceParameter(zval* const zoffset, const size_t offset, size_t& memberOffset) {
+static inline void setOffsetReferenceParameter(zval* const zoffset, const size_t offset, size_t& memberOffset, size_t &memberUsed) {
 	if (zoffset != NULL) {
 		ZEND_TRY_ASSIGN_REF_LONG(zoffset, static_cast<zend_long>(offset));
 	} else {
 		memberOffset = offset;
+	}
+	if (offset > memberUsed) {
+		memberUsed = offset;
 	}
 }
 
@@ -121,7 +125,7 @@ void ZEND_FASTCALL zif_readType(INTERNAL_FUNCTION_PARAMETERS) {
 
 	TValue result;
 	if (readTypeFunc(object->buffer, offset, result)) {
-		setOffsetReferenceParameter(zoffset, offset, object->offset);
+		setOffsetReferenceParameter(zoffset, offset, object->offset, object->used);
 		assignResult(return_value, result);
 	}
 }
@@ -262,17 +266,18 @@ void ZEND_FASTCALL zif_writeType(INTERNAL_FUNCTION_PARAMETERS) {
 		return;
 	}
 
-	object->buffer = writeTypeFunc(zend_string_separate(object->buffer, 0), offset, value);
-	setOffsetReferenceParameter(zoffset, offset, object->offset);
+	object->buffer = writeTypeFunc(object->buffer, offset, value);
+	setOffsetReferenceParameter(zoffset, offset, object->offset, object->used);
 }
 
 static inline zend_string* extendBuffer(zend_string* buffer, size_t offset, size_t usedBytes) {
 	size_t requiredSize = offset + usedBytes;
 	if (ZSTR_LEN(buffer) < requiredSize) {
-		//TODO: this will result in linear allocations once the buffer size is exceeded, which will cause a slowdown
-		//we should do a std::vector style size doubling or something like that
-		buffer = zend_string_extend(buffer, requiredSize, 0);
-		ZSTR_VAL(buffer)[requiredSize] = '\0'; //make sure null terminator is always set, to stop sprintf reading out-of-bounds
+		size_t doubleSize = ZSTR_LEN(buffer) * 2;
+		buffer = zend_string_realloc(buffer, doubleSize > requiredSize ? doubleSize : requiredSize, 0);
+		ZSTR_VAL(buffer)[ZSTR_LEN(buffer)] = '\0'; //make sure null terminator is always set, to stop sprintf reading out-of-bounds
+	} else {
+		buffer = zend_string_separate(buffer, 0);
 	}
 
 	return buffer;
@@ -419,7 +424,7 @@ static PHP_METHOD(ByteBuffer, toString) {
 	zend_parse_parameters_none_throw();
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
-	RETURN_STR_COPY(object->buffer);
+	RETURN_STRINGL(ZSTR_VAL(object->buffer), object->used);
 }
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_getOffset, 0, 0, IS_LONG, 0)

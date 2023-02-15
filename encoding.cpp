@@ -568,7 +568,9 @@ static PHP_METHOD(ByteBuffer, trim) {
 	zend_parse_parameters_none_throw();
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
-	object->buffer = zend_string_truncate(object->buffer, object->used, 0);
+	if (ZSTR_LEN(object->buffer) > object->used) {
+		object->buffer = zend_string_truncate(object->buffer, object->used, 0);
+	}
 }
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_rewind, 0, 0, IS_VOID, 0)

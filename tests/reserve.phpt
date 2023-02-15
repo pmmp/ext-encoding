@@ -10,7 +10,7 @@ $buffer->reserve(40);
 var_dump($buffer->getReserved()); //40
 var_dump($buffer->toString()); //still empty, we haven't used any space
 
-$buffer->writeByte(ord("a"));
+$buffer->writeSignedByte(ord("a"));
 var_dump($buffer->getReserved()); //40
 var_dump($buffer->toString());
 

@@ -415,6 +415,7 @@ static PHP_METHOD(ByteBuffer, __construct) {
 	}
 
 	object->buffer = buffer;
+	object->used = ZSTR_LEN(buffer);
 	zend_string_addref(buffer);
 }
 

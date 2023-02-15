@@ -427,6 +427,74 @@ static PHP_METHOD(ByteBuffer, toString) {
 	RETURN_STRINGL(ZSTR_VAL(object->buffer), object->used);
 }
 
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_readByteArray, 0, 1, IS_STRING, 0)
+	ZEND_ARG_TYPE_INFO(0, length, IS_LONG, 0)
+	ZEND_ARG_TYPE_INFO(1, offset, IS_LONG, 1)
+ZEND_END_ARG_INFO()
+
+static PHP_METHOD(ByteBuffer, readByteArray) {
+	zval *zoffset = NULL;
+	zend_long length;
+	size_t offset = 0;
+	byte_buffer_zend_object* object;
+
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 2)
+		Z_PARAM_LONG(length)
+		Z_PARAM_OPTIONAL
+		Z_PARAM_ZVAL(zoffset)
+	ZEND_PARSE_PARAMETERS_END();
+
+	if (length < 0) {
+		zend_value_error("Length cannot be negative");
+		return;
+	}
+	if (length == 0) { //to mirror PM BinaryStream behaviour
+		RETURN_STR(zend_empty_string);
+	}
+
+	object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
+	if (!handleOffsetReferenceParameter(zoffset, offset, object->buffer, object->offset)) {
+		return;
+	}
+
+	if (ZSTR_LEN(object->buffer) - offset < length) {
+		zend_throw_exception_ex(data_decode_exception_ce, 0, "Need at least %zu bytes, but only have %zu bytes", length, ZSTR_LEN(object->buffer) - offset);
+		return;
+	}
+
+	RETVAL_STRINGL(ZSTR_VAL(object->buffer) + offset, length);
+	offset += length;
+	setOffsetReferenceParameter(zoffset, offset, object->offset, object->used);
+}
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_writeByteArray, 0, 1, IS_VOID, 0)
+	ZEND_ARG_TYPE_INFO(0, value, IS_STRING, 0)
+	ZEND_ARG_TYPE_INFO(1, offset, IS_LONG, 1)
+ZEND_END_ARG_INFO()
+
+static PHP_METHOD(ByteBuffer, writeByteArray) {
+	zend_string* value;
+	zval* zoffset = NULL;
+	size_t offset;
+	byte_buffer_zend_object* object;
+
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 2)
+		Z_PARAM_STR(value)
+		Z_PARAM_OPTIONAL
+		Z_PARAM_ZVAL(zoffset)
+	ZEND_PARSE_PARAMETERS_END();
+
+
+	object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
+	if (!handleOffsetReferenceParameter(zoffset, offset, NULL, object->offset)) {
+		return;
+	}
+
+	object->buffer = extendBuffer(object->buffer, offset, ZSTR_LEN(value));
+	memcpy(ZSTR_VAL(object->buffer) + offset, ZSTR_VAL(value), ZSTR_LEN(value));
+	setOffsetReferenceParameter(zoffset, offset + ZSTR_LEN(value), object->offset, object->used);
+}
+
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_getOffset, 0, 0, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
@@ -585,6 +653,9 @@ static zend_function_entry byte_buffer_methods[] = {
 
 	PHP_ME(ByteBuffer, __construct, ByteBuffer___construct, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
 	PHP_ME(ByteBuffer, toString, ByteBuffer_toString, ZEND_ACC_PUBLIC)
+
+	PHP_ME(ByteBuffer, readByteArray, ByteBuffer_readByteArray, ZEND_ACC_PUBLIC)
+	PHP_ME(ByteBuffer, writeByteArray, ByteBuffer_writeByteArray, ZEND_ACC_PUBLIC)
 
 	PHP_ME(ByteBuffer, getOffset, ByteBuffer_getOffset, ZEND_ACC_PUBLIC)
 	PHP_ME(ByteBuffer, setOffset, ByteBuffer_setOffset, ZEND_ACC_PUBLIC)

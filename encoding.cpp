@@ -358,6 +358,7 @@ static zend_object* byte_buffer_new(zend_class_entry* ce) {
 	auto object = alloc_custom_zend_object<byte_buffer_zend_object>(ce, &byte_buffer_zend_object_handlers);
 
 	object->offset = 0;
+	object->used = 0;
 	object->buffer = zend_empty_string;
 	return &object->std;
 }

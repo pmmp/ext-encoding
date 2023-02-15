@@ -435,23 +435,25 @@ ZEND_END_ARG_INFO()
 
 static PHP_METHOD(ByteBuffer, readByteArray) {
 	zval *zoffset = NULL;
-	zend_long length;
+	zend_long zlength;
 	size_t offset = 0;
 	byte_buffer_zend_object* object;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 2)
-		Z_PARAM_LONG(length)
+		Z_PARAM_LONG(zlength)
 		Z_PARAM_OPTIONAL
 		Z_PARAM_ZVAL(zoffset)
 	ZEND_PARSE_PARAMETERS_END();
 
-	if (length < 0) {
+	if (zlength < 0) {
 		zend_value_error("Length cannot be negative");
 		return;
 	}
-	if (length == 0) { //to mirror PM BinaryStream behaviour
+	if (zlength == 0) { //to mirror PM BinaryStream behaviour
 		RETURN_STR(zend_empty_string);
 	}
+
+	size_t length = static_cast<size_t>(zlength);
 
 	object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
 	if (!handleOffsetReferenceParameter(zoffset, offset, object->buffer, object->offset)) {

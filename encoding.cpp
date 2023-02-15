@@ -179,8 +179,9 @@ struct VarIntConstants {
 	static const unsigned char MSB_MASK = static_cast<unsigned char>(1u << BITS_PER_BYTE);
 };
 
-template<size_t TYPE_BITS, typename TValue>
+template<typename TValue>
 static inline bool readUnsignedVarInt(zend_string *bytes, size_t used, size_t& offset, TValue &result) {
+	const auto TYPE_BITS = sizeof(TValue) * CHAR_BIT;
 	result = 0;
 	for (unsigned int shift = 0; shift < TYPE_BITS; shift += VarIntConstants::BITS_PER_BYTE) {
 		if (offset >= used) {
@@ -199,10 +200,10 @@ static inline bool readUnsignedVarInt(zend_string *bytes, size_t used, size_t& o
 	return false;
 }
 
-template<size_t TYPE_BITS, typename TUnsignedValue, typename TSignedValue>
+template<typename TUnsignedValue, typename TSignedValue>
 static inline bool readSignedVarInt(zend_string* bytes, size_t used, size_t& offset, TSignedValue& result) {
 	TUnsignedValue unsignedResult;
-	if (!readUnsignedVarInt<TYPE_BITS, TUnsignedValue>(bytes, used, offset, unsignedResult)) {
+	if (!readUnsignedVarInt<TUnsignedValue>(bytes, used, offset, unsignedResult)) {
 		return false;
 	}
 
@@ -313,8 +314,9 @@ static zend_string* writeFixedSizeType(zend_string* buffer, size_t& offset, TVal
 	return buffer;
 }
 
-template<size_t TYPE_BITS, typename TValue>
+template<typename TValue>
 static inline zend_string* writeUnsignedVarInt(zend_string* buffer, size_t& offset, TValue value) {
+	const auto TYPE_BITS = sizeof(TValue) * CHAR_BIT;
 	char result[VarIntConstants::MAX_BYTES<TYPE_BITS>];
 
 	TValue remaining = value;
@@ -343,7 +345,7 @@ static inline zend_string* writeUnsignedVarInt(zend_string* buffer, size_t& offs
 	return buffer;
 }
 
-template<size_t TYPE_BITS, typename TUnsignedType, typename TSignedType>
+template<typename TUnsignedType, typename TSignedType>
 static inline zend_string* writeSignedVarInt(zend_string* buffer, size_t& offset, TSignedType value) {
 	TUnsignedType mask = 0;
 	if (value < 0) {
@@ -351,7 +353,7 @@ static inline zend_string* writeSignedVarInt(zend_string* buffer, size_t& offset
 		mask = ~mask;
 	}
 
-	return writeUnsignedVarInt<TYPE_BITS, TUnsignedType>(buffer, offset, (static_cast<TUnsignedType>(value) << 1) ^ mask);
+	return writeUnsignedVarInt<TUnsignedType>(buffer, offset, (static_cast<TUnsignedType>(value) << 1) ^ mask);
 }
 
 static zend_object* byte_buffer_new(zend_class_entry* ce) {
@@ -656,17 +658,17 @@ PHP_RINIT_FUNCTION(encoding)
 	ZEND_RAW_FENTRY(zend_name "LE", (zif_readType<native_type, (readFixedSizeType<native_type, ByteOrder::LittleEndian>), result_wrapper>), arg_info, ZEND_ACC_PUBLIC) \
 	ZEND_RAW_FENTRY(zend_name "BE", (zif_readType<native_type, (readFixedSizeType<native_type, ByteOrder::BigEndian>), result_wrapper>), arg_info, ZEND_ACC_PUBLIC)
 
-#define READ_VARINT_FENTRY(size, size_name, unsigned_type, signed_type) \
-	ZEND_RAW_FENTRY("readUnsignedVar" size_name, (zif_readType<unsigned_type, (readUnsignedVarInt<size, unsigned_type>), zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC) \
-	ZEND_RAW_FENTRY("readSignedVar" size_name, (zif_readType<signed_type, (readSignedVarInt<size, unsigned_type, signed_type>), zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC)
+#define READ_VARINT_FENTRY(size_name, unsigned_type, signed_type) \
+	ZEND_RAW_FENTRY("readUnsignedVar" size_name, (zif_readType<unsigned_type, (readUnsignedVarInt<unsigned_type>), zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC) \
+	ZEND_RAW_FENTRY("readSignedVar" size_name, (zif_readType<signed_type, (readSignedVarInt<unsigned_type, signed_type>), zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC)
 
 #define WRITE_FIXED_TYPE_FENTRY(zend_name, native_type, parse_parameters_wrapper, arg_info) \
 	ZEND_RAW_FENTRY(zend_name "LE", (zif_writeType<native_type, parse_parameters_wrapper<native_type>, (writeFixedSizeType<native_type, ByteOrder::LittleEndian>)>), arg_info, ZEND_ACC_PUBLIC) \
 	ZEND_RAW_FENTRY(zend_name "BE", (zif_writeType<native_type, parse_parameters_wrapper<native_type>, (writeFixedSizeType<native_type, ByteOrder::BigEndian>)>), arg_info, ZEND_ACC_PUBLIC)
 
-#define WRITE_VARINT_FENTRY(size, size_name, unsigned_type, signed_type) \
-	ZEND_RAW_FENTRY("writeUnsignedVar" size_name, (zif_writeType<unsigned_type, zend_parse_parameters_long_wrapper<unsigned_type>, (writeUnsignedVarInt<size, unsigned_type>)>), arginfo_write_integer, ZEND_ACC_PUBLIC) \
-	ZEND_RAW_FENTRY("writeSignedVar" size_name, (zif_writeType<signed_type, zend_parse_parameters_long_wrapper<signed_type>, (writeSignedVarInt<size, unsigned_type, signed_type>)>), arginfo_write_integer, ZEND_ACC_PUBLIC)
+#define WRITE_VARINT_FENTRY(size_name, unsigned_type, signed_type) \
+	ZEND_RAW_FENTRY("writeUnsignedVar" size_name, (zif_writeType<unsigned_type, zend_parse_parameters_long_wrapper<unsigned_type>, (writeUnsignedVarInt<unsigned_type>)>), arginfo_write_integer, ZEND_ACC_PUBLIC) \
+	ZEND_RAW_FENTRY("writeSignedVar" size_name, (zif_writeType<signed_type, zend_parse_parameters_long_wrapper<signed_type>, (writeSignedVarInt<unsigned_type, signed_type>)>), arginfo_write_integer, ZEND_ACC_PUBLIC)
 
 static zend_function_entry byte_buffer_methods[] = {
 	ZEND_RAW_FENTRY("readUnsignedByte", (zif_readType<uint8_t, readByte<uint8_t>, zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC)
@@ -680,8 +682,8 @@ static zend_function_entry byte_buffer_methods[] = {
 	READ_FIXED_TYPE_FENTRY("readFloat", float, zval_double_wrapper, arginfo_read_float)
 	READ_FIXED_TYPE_FENTRY("readDouble", double, zval_double_wrapper, arginfo_read_float)
 
-	READ_VARINT_FENTRY(32, "Int", uint32_t, int32_t)
-	READ_VARINT_FENTRY(64, "Long", uint64_t, int64_t)
+	READ_VARINT_FENTRY("Int", uint32_t, int32_t)
+	READ_VARINT_FENTRY("Long", uint64_t, int64_t)
 
 	ZEND_RAW_FENTRY("writeByte", (zif_writeType<int8_t, zend_parse_parameters_long_wrapper<int8_t>, writeByte>), arginfo_write_integer, ZEND_ACC_PUBLIC)
 	WRITE_FIXED_TYPE_FENTRY("writeShort", int16_t, zend_parse_parameters_long_wrapper, arginfo_write_integer)
@@ -690,8 +692,8 @@ static zend_function_entry byte_buffer_methods[] = {
 	WRITE_FIXED_TYPE_FENTRY("writeFloat", float, zend_parse_parameters_double_wrapper, arginfo_write_float)
 	WRITE_FIXED_TYPE_FENTRY("writeDouble", double, zend_parse_parameters_double_wrapper, arginfo_write_float)
 
-	WRITE_VARINT_FENTRY(32, "Int", uint32_t, int32_t)
-	WRITE_VARINT_FENTRY(64, "Long", uint64_t, int64_t)
+	WRITE_VARINT_FENTRY("Int", uint32_t, int32_t)
+	WRITE_VARINT_FENTRY("Long", uint64_t, int64_t)
 
 	PHP_ME(ByteBuffer, __construct, ByteBuffer___construct, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
 	PHP_ME(ByteBuffer, toString, ByteBuffer_toString, ZEND_ACC_PUBLIC)

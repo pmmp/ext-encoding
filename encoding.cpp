@@ -672,7 +672,6 @@ static zend_function_entry byte_buffer_methods[] = {
 	ZEND_RAW_FENTRY("readUnsignedByte", (zif_readType<uint8_t, readByte<uint8_t>, zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC)
 	ZEND_RAW_FENTRY("readSignedByte", (zif_readType<int8_t, readByte<int8_t>, zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC)
 
-	READ_FIXED_TYPE_FENTRY("readSignedByte", int8_t, zval_long_wrapper, arginfo_read_integer)
 	READ_FIXED_TYPE_FENTRY("readUnsignedShort", uint16_t, zval_long_wrapper, arginfo_read_integer)
 	READ_FIXED_TYPE_FENTRY("readSignedShort", int16_t, zval_long_wrapper, arginfo_read_integer)
 	READ_FIXED_TYPE_FENTRY("readUnsignedInt", uint32_t, zval_long_wrapper, arginfo_read_integer)

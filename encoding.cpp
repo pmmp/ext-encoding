@@ -400,15 +400,16 @@ static int byte_buffer_compare_objects(zval* obj1, zval* obj2) {
 	return 1;
 }
 
-ZEND_BEGIN_ARG_INFO_EX(ByteBuffer___construct, 0, 0, 1)
+ZEND_BEGIN_ARG_INFO_EX(ByteBuffer___construct, 0, 0, 0)
 	ZEND_ARG_TYPE_INFO(0, buffer, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 
 static PHP_METHOD(ByteBuffer, __construct) {
-	zend_string* buffer;
+	zend_string* buffer = NULL;
 	byte_buffer_zend_object* object;
 
-	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 0, 1)
+		Z_PARAM_OPTIONAL
 		Z_PARAM_STR(buffer)
 	ZEND_PARSE_PARAMETERS_END();
 
@@ -417,6 +418,9 @@ static PHP_METHOD(ByteBuffer, __construct) {
 		zend_string_release_ex(object->buffer, 0);
 	}
 
+	if (buffer == NULL) {
+		buffer = zend_empty_string;
+	}
 	object->buffer = buffer;
 	object->used = ZSTR_LEN(buffer);
 	zend_string_addref(buffer);

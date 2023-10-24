@@ -3,6 +3,8 @@ Test that ByteBuffer::trim() works correctly
 --FILE--
 <?php
 
+use pmmp\encoding\ByteBuffer;
+
 $buffer = new ByteBuffer("");
 $buffer->reserve(100);
 $buffer->writeByteArray("aaaaa");

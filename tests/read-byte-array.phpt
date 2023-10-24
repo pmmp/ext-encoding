@@ -3,12 +3,15 @@ Test that ByteBuffer::readByteArray() works as expected
 --FILE--
 <?php
 
+use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\DataDecodeException;
+
 $buffer = new ByteBuffer("");
 
 //read with no bytes available
 try{
     $buffer->readByteArray(1);
-}catch(\DataDecodeException $e){
+}catch(DataDecodeException $e){
     echo $e->getMessage() . PHP_EOL;
 }
 
@@ -17,7 +20,7 @@ var_dump($buffer->readByteArray(3));
 var_dump($buffer->readByteArray(1));
 try{
     $buffer->readByteArray(2);
-}catch(\DataDecodeException $e){
+}catch(DataDecodeException $e){
     echo $e->getMessage() . PHP_EOL;
 }
 

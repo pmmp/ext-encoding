@@ -5,6 +5,8 @@ encoding
 --FILE--
 <?php
 
+use pmmp\encoding\ByteBuffer;
+
 function test(string $function, int $size) : void{
 	$offset = $size;
 	$originalOffset = $offset;

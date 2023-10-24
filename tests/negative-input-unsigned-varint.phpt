@@ -20,6 +20,8 @@ encoding
 --FILE--
 <?php
 
+use pmmp\encoding\ByteBuffer;
+
 $buffer = new ByteBuffer("");
 $buffer->writeUnsignedVarInt(-1);
 $offset = 0;

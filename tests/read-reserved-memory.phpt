@@ -6,18 +6,21 @@ uninitialized values to PHP.
 --FILE--
 <?php
 
+use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\DataDecodeException;
+
 $buffer = new ByteBuffer("");
 $buffer->reserve(100);
 
 try{
     var_dump($buffer->readByteArray(10));
-}catch(\DataDecodeException $e){
+}catch(DataDecodeException $e){
     echo $e->getMessage() . PHP_EOL;
 }
 
 try{
     var_dump($buffer->readUnsignedByte());
-}catch(\DataDecodeException $e){
+}catch(DataDecodeException $e){
     echo $e->getMessage() . PHP_EOL;
 }
 

@@ -3,6 +3,8 @@ Test that reserving works correctly
 --FILE--
 <?php
 
+use pmmp\encoding\ByteBuffer;
+
 $buffer = new ByteBuffer("");
 var_dump($buffer->getReserved()); //none
 

@@ -5,6 +5,8 @@ ByteBuffer may allocate more bytes than it needs in order to minimize allocation
 --FILE--
 <?php
 
+use pmmp\encoding\ByteBuffer;
+
 $buffer = new ByteBuffer("");
 $buffer->writeSignedIntBE(0); //first buffer alloc, 4 bytes
 $buffer->writeSignedByte(0); //second buffer alloc, 8 bytes (used 5)

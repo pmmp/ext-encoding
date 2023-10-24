@@ -3,6 +3,8 @@ read*() must read from the offset given, or the start if none
 --FILE--
 <?php
 
+use pmmp\encoding\ByteBuffer;
+
 function test(string $function, string $buffer) : void{
 	$paddingSize = 4;
 	$paddedBuffer = str_repeat("\x00", $paddingSize) . $buffer;

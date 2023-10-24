@@ -644,7 +644,8 @@ static PHP_METHOD(ByteBuffer, __debugInfo) {
 PHP_MINFO_FUNCTION(encoding)
 {
 	php_info_print_table_start();
-	php_info_print_table_header(2, "encoding support", "enabled");
+	php_info_print_table_header(2, "Version", PHP_ENCODING_VERSION);
+	php_info_print_table_header(2, "Experimental", "YES");
 	php_info_print_table_end();
 }
 /* }}} */
@@ -734,11 +735,11 @@ static zend_function_entry byte_buffer_methods[] = {
 
 PHP_MINIT_FUNCTION(encoding) {
 	zend_class_entry ce;
-	INIT_CLASS_ENTRY(ce, "DataDecodeException", NULL);
+	INIT_CLASS_ENTRY(ce, "pmmp\\encoding\\DataDecodeException", NULL);
 	data_decode_exception_ce = zend_register_internal_class_ex(&ce, spl_ce_RuntimeException);
 	data_decode_exception_ce->ce_flags |= ZEND_ACC_FINAL;
 
-	INIT_CLASS_ENTRY(ce, "ByteBuffer", byte_buffer_methods);
+	INIT_CLASS_ENTRY(ce, "pmmp\\encoding\\ByteBuffer", byte_buffer_methods);
 	byte_buffer_ce = zend_register_internal_class(&ce);
 	byte_buffer_ce->ce_flags |= ZEND_ACC_FINAL | ZEND_ACC_NO_DYNAMIC_PROPERTIES;
 	byte_buffer_ce->create_object = byte_buffer_new;

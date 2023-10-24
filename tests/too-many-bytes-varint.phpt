@@ -13,6 +13,9 @@ encoding
 --FILE--
 <?php
 
+use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\DataDecodeException;
+
 $shortBuf = str_repeat("\x80", 6);
 $longBuf = str_repeat("\x80", 11);
 

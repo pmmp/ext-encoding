@@ -5,6 +5,9 @@ encoding
 --FILE--
 <?php
 
+use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\DataDecodeException;
+
 $functions = require __DIR__ . '/fixed-size-types.inc';
 
 $test = str_repeat("\x00", 16);

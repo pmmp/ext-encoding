@@ -3,6 +3,8 @@ Test that ByteBuffer::writeByteArray() works as expected
 --FILE--
 <?php
 
+use pmmp\encoding\ByteBuffer;
+
 $buffer = new ByteBuffer("");
 $buffer->writeByteArray("12345");
 

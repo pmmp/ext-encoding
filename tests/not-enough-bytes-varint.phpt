@@ -5,6 +5,9 @@ encoding
 --FILE--
 <?php
 
+use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\DataDecodeException;
+
 function test(string $function) : void{
 	$buffer = new ByteBuffer("\x80");
 	try{

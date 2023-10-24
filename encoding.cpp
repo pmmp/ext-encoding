@@ -528,7 +528,7 @@ static PHP_METHOD(ByteBuffer, setOffset) {
 	ZEND_PARSE_PARAMETERS_END();
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
-	if (offset < 0 || static_cast<size_t>(offset) >= object->used) {
+	if (offset < 0 || static_cast<size_t>(offset) > object->used) {
 		zend_value_error("Offset must not be less than zero or greater than the buffer size");
 		return;
 	}

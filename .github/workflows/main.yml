@@ -35,6 +35,12 @@ jobs:
           path: ${{ github.workspace }}/php 
           key: php-${{ matrix.php }}-debug-${{ matrix.debug }}-valgrind-${{ matrix.valgrind }}-zts-${{ matrix.zts }}
 
+      - name: Install PHP build dependencies
+        if: steps.php-build-cache.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update && sudo apt-get install \
+            re2c
+
       - name: Get number of CPU cores
         if: steps.php-build-cache.outputs.cache-hit != 'true'
         uses: SimenB/github-actions-cpu-cores@v1

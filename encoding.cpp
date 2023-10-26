@@ -106,7 +106,7 @@ static inline void setOffsetReferenceParameter(zval* const zoffset, const size_t
 	}
 }
 
-template<typename TValue, bool (*readTypeFunc)(zend_string* bytes, size_t used, size_t& offset, TValue& result), void(*assignResult)(zval*, TValue)>
+template<typename TValue, bool (*readTypeFunc)(unsigned char* bytes, size_t used, size_t& offset, TValue& result), void(*assignResult)(zval*, TValue)>
 void ZEND_FASTCALL zif_readType(INTERNAL_FUNCTION_PARAMETERS) {
 	zval* zoffset = NULL;
 	size_t offset = 0;
@@ -124,27 +124,28 @@ void ZEND_FASTCALL zif_readType(INTERNAL_FUNCTION_PARAMETERS) {
 	}
 
 	TValue result;
-	if (readTypeFunc(object->buffer, object->used, offset, result)) {
+	auto bytes = reinterpret_cast<unsigned char*>(ZSTR_VAL(object->buffer));
+	if (readTypeFunc(bytes, object->used, offset, result)) {
 		setOffsetReferenceParameter(zoffset, offset, object->offset, object->used);
 		assignResult(return_value, result);
 	}
 }
 
 template<typename TValue>
-static inline bool readByte(zend_string* buffer, size_t used, size_t& offset, TValue& result) {
+static inline bool readByte(unsigned char* buffer, size_t used, size_t& offset, TValue& result) {
 	const auto SIZE = sizeof(TValue);
 	if (used - offset < SIZE) {
 		zend_throw_exception_ex(data_decode_exception_ce, 0, "Need at least %zu bytes, but only have %zu bytes", SIZE, used - offset);
 		return false;
 	}
 
-	result = *(reinterpret_cast<TValue*>(&ZSTR_VAL(buffer)[offset]));
+	result = *(reinterpret_cast<TValue*>(buffer[offset]));
 
 	offset += SIZE;
 	return true;
 }
 template<typename TValue, ByteOrder byteOrder>
-static inline bool readFixedSizeType(zend_string* bytes, size_t used, size_t& offset, TValue& result) {
+static inline bool readFixedSizeType(unsigned char* bytes, size_t used, size_t& offset, TValue& result) {
 
 	const auto SIZE = sizeof(TValue);
 	if (used - offset < SIZE) {
@@ -153,13 +154,13 @@ static inline bool readFixedSizeType(zend_string* bytes, size_t used, size_t& of
 	}
 
 	if (byteOrder == ByteOrder::Native) {
-		result = *(reinterpret_cast<TValue*>(&ZSTR_VAL(bytes)[offset]));
+		result = *(reinterpret_cast<TValue*>(&bytes[offset]));
 	} else {
 		//endian flip
 		Flipper<TValue> flipper;
 
 		for (unsigned int i = 0; i < sizeof(TValue); i++) {
-			flipper.bytes[sizeof(TValue) - i - 1] = ZSTR_VAL(bytes)[i + offset];
+			flipper.bytes[sizeof(TValue) - i - 1] = bytes[i + offset];
 		}
 
 		result = flipper.value;
@@ -180,7 +181,7 @@ struct VarIntConstants {
 };
 
 template<typename TValue>
-static inline bool readUnsignedVarInt(zend_string *bytes, size_t used, size_t& offset, TValue &result) {
+static inline bool readUnsignedVarInt(unsigned char *bytes, size_t used, size_t& offset, TValue &result) {
 	const auto TYPE_BITS = sizeof(TValue) * CHAR_BIT;
 	result = 0;
 	for (unsigned int shift = 0; shift < TYPE_BITS; shift += VarIntConstants::BITS_PER_BYTE) {
@@ -188,9 +189,9 @@ static inline bool readUnsignedVarInt(zend_string *bytes, size_t used, size_t& o
 			zend_throw_exception(data_decode_exception_ce, "No bytes left in buffer", 0);
 			return false;
 		}
-		TValue byte = (TValue) ZSTR_VAL(bytes)[offset++];
 
-		result |= ((byte & VarIntConstants::VALUE_MASK) << shift);
+		auto byte = bytes[offset++];
+		result |= (byte & VarIntConstants::VALUE_MASK) << shift;
 		if ((byte & VarIntConstants::MSB_MASK) == 0) {
 			return true;
 		}
@@ -201,7 +202,7 @@ static inline bool readUnsignedVarInt(zend_string *bytes, size_t used, size_t& o
 }
 
 template<typename TUnsignedValue, typename TSignedValue>
-static inline bool readSignedVarInt(zend_string* bytes, size_t used, size_t& offset, TSignedValue& result) {
+static inline bool readSignedVarInt(unsigned char* bytes, size_t used, size_t& offset, TSignedValue& result) {
 	TUnsignedValue unsignedResult;
 	if (!readUnsignedVarInt<TUnsignedValue>(bytes, used, offset, unsignedResult)) {
 		return false;

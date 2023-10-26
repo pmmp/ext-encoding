@@ -139,7 +139,7 @@ static inline bool readByte(unsigned char* buffer, size_t used, size_t& offset, 
 		return false;
 	}
 
-	result = *(reinterpret_cast<TValue*>(buffer[offset]));
+	result = *(reinterpret_cast<TValue*>(&buffer[offset]));
 
 	offset += SIZE;
 	return true;

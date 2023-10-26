@@ -73,3 +73,15 @@ readDoubleLE with offset: Need at least 8 bytes, but only have 1 bytes
 
 readDoubleBE no offset: Need at least 8 bytes, but only have 1 bytes
 readDoubleBE with offset: Need at least 8 bytes, but only have 1 bytes
+
+readUnsignedTriadBE no offset: Need at least 3 bytes, but only have 1 bytes
+readUnsignedTriadBE with offset: Need at least 3 bytes, but only have 1 bytes
+
+readUnsignedTriadLE no offset: Need at least 3 bytes, but only have 1 bytes
+readUnsignedTriadLE with offset: Need at least 3 bytes, but only have 1 bytes
+
+readSignedTriadBE no offset: Need at least 3 bytes, but only have 1 bytes
+readSignedTriadBE with offset: Need at least 3 bytes, but only have 1 bytes
+
+readSignedTriadLE no offset: Need at least 3 bytes, but only have 1 bytes
+readSignedTriadLE with offset: Need at least 3 bytes, but only have 1 bytes

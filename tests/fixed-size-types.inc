@@ -17,4 +17,9 @@ return [
 	'readSignedLongBE' => "\xff\xff\xff\xff\xff\xff\xff\xff",
 	'readDoubleLE' => "\x11\xff\xff\x11\x11\xff\xff\x11",
 	'readDoubleBE' => "\x11\xff\xff\x11\x11\xff\xff\x11",
+
+	'readUnsignedTriadBE' => "\xff\xee\xdd",
+	'readUnsignedTriadLE' => "\xdd\xee\xff",
+	'readSignedTriadBE' => "\xff\xee\xdd",
+	'readSignedTriadLE' => "\xdd\xee\xff",
 ];

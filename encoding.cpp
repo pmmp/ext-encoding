@@ -763,7 +763,9 @@ static zend_function_entry byte_buffer_methods[] = {
 
 	READ_WRITE_LONG_ENTRY("Short", uint16_t, int16_t)
 	READ_WRITE_LONG_ENTRY("Int", uint32_t, int32_t)
-	READ_WRITE_LONG_ENTRY("Long", uint64_t, int64_t)
+
+	READ_FIXED_TYPE_FENTRY("SignedLong", int64_t, zval_long_wrapper, arginfo_read_integer)
+	WRITE_FIXED_TYPE_FENTRY("SignedLong", int64_t, zend_parse_parameters_long_wrapper, arginfo_write_integer)
 
 	READ_WRITE_FLOAT_ENTRY("Float", float)
 	READ_WRITE_FLOAT_ENTRY("Double", double)

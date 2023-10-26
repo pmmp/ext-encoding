@@ -172,7 +172,7 @@ static inline bool readFixedSizeType(unsigned char* bytes, size_t used, size_t& 
 
 template<typename TValue, ByteOrder byteOrder, unsigned int signedShift>
 static inline bool readInt24(unsigned char* bytes, size_t used, size_t& offset, TValue& result) {
-	const auto SIZE = 3;
+	const size_t SIZE = 3;
 
 	if (used - offset < SIZE) {
 		zend_throw_exception_ex(data_decode_exception_ce, 0, "Need at least %zu bytes, but only have %zu bytes", SIZE, used - offset);
@@ -346,7 +346,7 @@ static zend_string* writeFixedSizeType(zend_string* buffer, size_t& offset, TVal
 
 template<typename TValue, ByteOrder byteOrder>
 static zend_string* writeInt24(zend_string* buffer, size_t& offset, TValue value) {
-	const auto SIZE = 3;
+	const size_t SIZE = 3;
 	buffer = extendBuffer(buffer, offset, SIZE);
 
 	if (byteOrder == ByteOrder::LittleEndian) {

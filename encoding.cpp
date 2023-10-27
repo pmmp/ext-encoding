@@ -573,7 +573,7 @@ static PHP_METHOD(ByteBuffer, __serialize) {
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
 	array_init(return_value);
-	add_assoc_str(return_value, "buffer", zend_string_copy(object->buffer));
+	add_assoc_stringl(return_value, "buffer", ZSTR_VAL(object->buffer), object->used);
 	add_assoc_long(return_value, "offset", object->offset);
 }
 
@@ -614,7 +614,7 @@ static PHP_METHOD(ByteBuffer, __debugInfo) {
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
 	array_init(return_value);
-	add_assoc_str(return_value, "buffer", zend_string_copy(object->buffer));
+	add_assoc_stringl(return_value, "buffer", ZSTR_VAL(object->buffer), object->used);
 	add_assoc_long(return_value, "offset", object->offset);
 }
 

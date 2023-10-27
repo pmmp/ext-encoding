@@ -13,6 +13,7 @@ extern "C" {
 }
 #include "ZendUtil.h"
 #include <algorithm>
+#include <iterator>
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_read_integer, 0, 0, IS_LONG, 0)
 ZEND_END_ARG_INFO()

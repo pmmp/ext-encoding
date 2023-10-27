@@ -14,21 +14,17 @@ extern "C" {
 #include "ZendUtil.h"
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_read_integer, 0, 0, IS_LONG, 0)
-	ZEND_ARG_TYPE_INFO(1, offset, IS_LONG, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_write_integer, 0, 1, IS_VOID, 0)
 	ZEND_ARG_TYPE_INFO(0, value, IS_LONG, 0)
-	ZEND_ARG_TYPE_INFO(1, offset, IS_LONG, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_read_float, 0, 0, IS_DOUBLE, 0)
-	ZEND_ARG_TYPE_INFO(1, offset, IS_LONG, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_write_float, 0, 1, IS_VOID, 0)
 	ZEND_ARG_TYPE_INFO(0, value, IS_DOUBLE, 0)
-	ZEND_ARG_TYPE_INFO(1, offset, IS_LONG, 1)
 ZEND_END_ARG_INFO()
 
 enum class ByteOrder {
@@ -69,64 +65,17 @@ static inline void zval_double_wrapper(zval* zv, TValue value) {
 	ZVAL_DOUBLE(zv, value);
 }
 
-static inline bool handleOffsetReferenceParameter(const zval* const zoffset, size_t& offset, const zend_string* const bytes, size_t defaultOffset, size_t used) {
-	if (zoffset != NULL) {
-		auto type = Z_TYPE_P(Z_REFVAL_P(zoffset));
-		if (type != IS_LONG && type != IS_NULL) {
-			zend_type_error("$offset expects int|null, %s given", zend_get_type_by_const(type));
-			return false;
-		}
-		zend_long offsetLval = Z_LVAL_P(Z_REFVAL_P(zoffset));
-
-		if (offsetLval < 0) {
-			zend_value_error("$offset expects at least 0, %zd given", offsetLval);
-			return false;
-		}
-		if (bytes != NULL && static_cast<size_t>(offsetLval) >= used) {
-			zend_value_error("$offset must be less than the length (%zd) of the input string, %zd given", used, offsetLval);
-			return false;
-		}
-
-		offset = static_cast<size_t>(offsetLval);
-	} else {
-		offset = defaultOffset;
-	}
-
-	return true;
-}
-
-static inline void setOffsetReferenceParameter(zval* const zoffset, const size_t offset, size_t& memberOffset, size_t &memberUsed) {
-	if (zoffset != NULL) {
-		ZEND_TRY_ASSIGN_REF_LONG(zoffset, static_cast<zend_long>(offset));
-	} else {
-		memberOffset = offset;
-	}
-	if (offset > memberUsed) {
-		memberUsed = offset;
-	}
-}
-
 template<typename TValue, bool (*readTypeFunc)(unsigned char* bytes, size_t used, size_t& offset, TValue& result), void(*assignResult)(zval*, TValue)>
 void ZEND_FASTCALL zif_readType(INTERNAL_FUNCTION_PARAMETERS) {
-	zval* zoffset = NULL;
-	size_t offset = 0;
 	byte_buffer_zend_object* object;
 
-	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 0, 1)
-		Z_PARAM_OPTIONAL
-		Z_PARAM_ZVAL(zoffset)
-	ZEND_PARSE_PARAMETERS_END();
-
+	zend_parse_parameters_none_throw();
 
 	object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
-	if (!handleOffsetReferenceParameter(zoffset, offset, object->buffer, object->offset, object->used)) {
-		return;
-	}
 
 	TValue result;
 	auto bytes = reinterpret_cast<unsigned char*>(ZSTR_VAL(object->buffer));
-	if (readTypeFunc(bytes, object->used, offset, result)) {
-		setOffsetReferenceParameter(zoffset, offset, object->offset, object->used);
+	if (readTypeFunc(bytes, object->used, object->offset, result)) {
 		assignResult(return_value, result);
 	}
 }
@@ -248,13 +197,11 @@ static inline bool readSignedVarInt(unsigned char* bytes, size_t used, size_t& o
 
 
 template<typename TValue>
-static bool zend_parse_parameters_long_wrapper(zend_execute_data* execute_data, zval*& zoffset, TValue& value) {
+static bool zend_parse_parameters_long_wrapper(zend_execute_data* execute_data, TValue& value) {
 	zend_long actualValue;
 
-	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 2)
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
 		Z_PARAM_LONG(actualValue)
-		Z_PARAM_OPTIONAL
-		Z_PARAM_ZVAL(zoffset)
 	ZEND_PARSE_PARAMETERS_END_EX(return false);
 
 	value = static_cast<TValue>(actualValue);
@@ -263,12 +210,10 @@ static bool zend_parse_parameters_long_wrapper(zend_execute_data* execute_data, 
 }
 
 template<typename TValue>
-static bool zend_parse_parameters_double_wrapper(zend_execute_data* execute_data, zval*& zoffset, TValue& value) {
+static bool zend_parse_parameters_double_wrapper(zend_execute_data* execute_data, TValue& value) {
 	double actualValue;
-	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 2)
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
 		Z_PARAM_DOUBLE(actualValue)
-		Z_PARAM_OPTIONAL
-		Z_PARAM_ZVAL(zoffset)
 	ZEND_PARSE_PARAMETERS_END_EX(return false);
 
 	value = static_cast<TValue>(actualValue);
@@ -277,7 +222,7 @@ static bool zend_parse_parameters_double_wrapper(zend_execute_data* execute_data
 }
 
 template<typename TValue>
-using parseParametersFunc_t = bool (*)(zend_execute_data* execute_data, zval*& zoffset, TValue& value);
+using parseParametersFunc_t = bool (*)(zend_execute_data* execute_data, TValue& value);
 
 template<typename TValue>
 using writeTypeFunc_t = zend_string* (*)(zend_string *buffer, size_t& offset, TValue value);
@@ -285,19 +230,19 @@ using writeTypeFunc_t = zend_string* (*)(zend_string *buffer, size_t& offset, TV
 template<typename TValue, parseParametersFunc_t<TValue> parseParametersFunc, writeTypeFunc_t<TValue> writeTypeFunc>
 void ZEND_FASTCALL zif_writeType(INTERNAL_FUNCTION_PARAMETERS) {
 	TValue value;
-	zval* zoffset = NULL;
-	size_t offset;
 	byte_buffer_zend_object* object;
 
 	object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
 
 	//offsets beyond the end of the buffer are allowed, and result in automatic buffer extension
-	if (!parseParametersFunc(execute_data, zoffset, value) || !handleOffsetReferenceParameter(zoffset, offset, NULL, object->offset, object->used)) {
+	if (!parseParametersFunc(execute_data, value)) {
 		return;
 	}
 
-	object->buffer = writeTypeFunc(object->buffer, offset, value);
-	setOffsetReferenceParameter(zoffset, offset, object->offset, object->used);
+	object->buffer = writeTypeFunc(object->buffer, object->offset, value);
+	if (object->offset > object->used) {
+		object->used = object->offset;
+	}
 }
 
 static inline zend_string* extendBuffer(zend_string* buffer, size_t offset, size_t usedBytes) {
@@ -487,19 +432,14 @@ static PHP_METHOD(ByteBuffer, toString) {
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_readByteArray, 0, 1, IS_STRING, 0)
 	ZEND_ARG_TYPE_INFO(0, length, IS_LONG, 0)
-	ZEND_ARG_TYPE_INFO(1, offset, IS_LONG, 1)
 ZEND_END_ARG_INFO()
 
 static PHP_METHOD(ByteBuffer, readByteArray) {
-	zval *zoffset = NULL;
 	zend_long zlength;
-	size_t offset = 0;
 	byte_buffer_zend_object* object;
 
-	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 2)
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
 		Z_PARAM_LONG(zlength)
-		Z_PARAM_OPTIONAL
-		Z_PARAM_ZVAL(zoffset)
 	ZEND_PARSE_PARAMETERS_END();
 
 	if (zlength < 0) {
@@ -513,46 +453,39 @@ static PHP_METHOD(ByteBuffer, readByteArray) {
 	size_t length = static_cast<size_t>(zlength);
 
 	object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
-	if (!handleOffsetReferenceParameter(zoffset, offset, object->buffer, object->offset, object->used)) {
+
+	if (object->used - object->offset < length) {
+		zend_throw_exception_ex(data_decode_exception_ce, 0, "Need at least %zu bytes, but only have %zu bytes", length, object->used - object->offset);
 		return;
 	}
 
-	if (object->used - offset < length) {
-		zend_throw_exception_ex(data_decode_exception_ce, 0, "Need at least %zu bytes, but only have %zu bytes", length, object->used - offset);
-		return;
-	}
-
-	RETVAL_STRINGL(ZSTR_VAL(object->buffer) + offset, length);
-	offset += length;
-	setOffsetReferenceParameter(zoffset, offset, object->offset, object->used);
+	RETVAL_STRINGL(ZSTR_VAL(object->buffer) + object->offset, length);
+	object->offset += length;
 }
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_writeByteArray, 0, 1, IS_VOID, 0)
 	ZEND_ARG_TYPE_INFO(0, value, IS_STRING, 0)
-	ZEND_ARG_TYPE_INFO(1, offset, IS_LONG, 1)
 ZEND_END_ARG_INFO()
 
 static PHP_METHOD(ByteBuffer, writeByteArray) {
 	zend_string* value;
-	zval* zoffset = NULL;
-	size_t offset;
 	byte_buffer_zend_object* object;
 
-	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 2)
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
 		Z_PARAM_STR(value)
-		Z_PARAM_OPTIONAL
-		Z_PARAM_ZVAL(zoffset)
 	ZEND_PARSE_PARAMETERS_END();
 
 
 	object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
-	if (!handleOffsetReferenceParameter(zoffset, offset, NULL, object->offset, object->used)) {
-		return;
-	}
 
-	object->buffer = extendBuffer(object->buffer, offset, ZSTR_LEN(value));
-	memcpy(ZSTR_VAL(object->buffer) + offset, ZSTR_VAL(value), ZSTR_LEN(value));
-	setOffsetReferenceParameter(zoffset, offset + ZSTR_LEN(value), object->offset, object->used);
+	auto size = ZSTR_LEN(value);
+
+	object->buffer = extendBuffer(object->buffer, object->offset, size);
+	memcpy(ZSTR_VAL(object->buffer) + object->offset, ZSTR_VAL(value), size);
+	object->offset += size;
+	if (object->offset > object->used) {
+		object->used = object->offset;
+	}
 }
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_getOffset, 0, 0, IS_LONG, 0)

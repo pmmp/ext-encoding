@@ -24,13 +24,13 @@ use pmmp\encoding\ByteBuffer;
 
 $buffer = new ByteBuffer("");
 $buffer->writeUnsignedVarInt(-1);
-$offset = 0;
-var_dump($buffer->readUnsignedVarInt($offset));
+$buffer->rewind();
+var_dump($buffer->readUnsignedVarInt());
 
 $buffer->rewind();
 $buffer->writeUnsignedVarLong(-1);
-$offset = 0;
-var_dump($buffer->readUnsignedVarLong($offset));
+$buffer->rewind();
+var_dump($buffer->readUnsignedVarLong());
 
 ?>
 --EXPECT--

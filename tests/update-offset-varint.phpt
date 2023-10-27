@@ -1,5 +1,5 @@
 --TEST--
-read(Un)SignedVar(Int|Long)() must correctly update the reference $offset parameter if given
+read(Un)SignedVar(Int|Long)() must correctly update the internal offset
 --EXTENSIONS--
 encoding
 --FILE--
@@ -9,11 +9,12 @@ use pmmp\encoding\ByteBuffer;
 
 function test(string $function, int $size) : void{
 	$varint = str_repeat(str_repeat("\x80", $size - 1) . "\x00", 3);
-	$offset = $size;
-	$originalOffset = $offset;
+	$buffer = new ByteBuffer($varint);
+	$originalOffset = $size;
+	$buffer->setOffset($originalOffset);
 
-	(new ByteBuffer($varint))->$function($offset);
-	var_dump($offset === $size + $originalOffset);
+	$buffer->$function();
+	var_dump($buffer->getOffset() === $size + $originalOffset);
 }
 
 test('readUnsignedVarInt', 5);

@@ -8,12 +8,14 @@ encoding
 use pmmp\encoding\ByteBuffer;
 
 function test(string $function, int $size) : void{
-	$offset = $size;
-	$originalOffset = $offset;
-	$buffer = str_repeat("\x00", $size * 3);
+	$originalOffset = $size;
 
-	(new ByteBuffer($buffer))->$function($offset);
-	var_dump($offset === $originalOffset + $size);
+	$bytes = str_repeat("\x00", $size * 3);
+	$buffer = new ByteBuffer($bytes);
+	$buffer->setOffset($originalOffset);
+
+	$buffer->$function();
+	var_dump($buffer->getOffset() === $originalOffset + $size);
 }
 
 $functions = require __DIR__ . '/fixed-size-types.inc';

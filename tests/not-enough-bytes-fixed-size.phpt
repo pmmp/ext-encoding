@@ -1,5 +1,5 @@
 --TEST--
-read*() for fixed-size type must throw DataDecodeException when not enough bytes are available after the offset given
+read*() for fixed-size type must throw DataDecodeException when not enough bytes are available
 --EXTENSIONS--
 encoding
 --FILE--
@@ -19,10 +19,10 @@ foreach($functions as $function => $buf){
 		echo "$function no offset: " . $e->getMessage() . "\n";
 	}
 
-	$offset = 15;
 	try{
 		$buffer = new ByteBuffer($test);
-		$buffer->$function($offset);
+		$buffer->setOffset(15);
+		$buffer->$function();
 	}catch(DataDecodeException $e){
 		echo "$function with offset: " . $e->getMessage() . "\n";
 	}

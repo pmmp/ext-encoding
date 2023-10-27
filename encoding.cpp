@@ -12,6 +12,7 @@ extern "C" {
 #include "ext/spl/spl_exceptions.h"
 }
 #include "ZendUtil.h"
+#include <algorithm>
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_read_integer, 0, 0, IS_LONG, 0)
 ZEND_END_ARG_INFO()
@@ -102,18 +103,14 @@ static inline bool readFixedSizeType(unsigned char* bytes, size_t used, size_t& 
 		return false;
 	}
 
-	if (byteOrder == ByteOrder::Native) {
-		result = *(reinterpret_cast<TValue*>(&bytes[offset]));
-	} else {
-		//endian flip
-		Flipper<TValue> flipper;
+	Flipper<TValue> flipper;
 
-		for (unsigned int i = 0; i < sizeof(TValue); i++) {
-			flipper.bytes[sizeof(TValue) - i - 1] = bytes[i + offset];
-		}
-
-		result = flipper.value;
+	memcpy(flipper.bytes, &bytes[offset], sizeof(flipper.bytes));
+	if (byteOrder != ByteOrder::Native) {
+		std::reverse(std::begin(flipper.bytes), std::end(flipper.bytes));
 	}
+
+	result = flipper.value;
 
 	offset += SIZE;
 	return true;
@@ -273,16 +270,14 @@ template<typename TValue, ByteOrder byteOrder>
 static zend_string* writeFixedSizeType(zend_string* buffer, size_t& offset, TValue value) {
 	buffer = extendBuffer(buffer, offset, sizeof(TValue));
 
-	if (byteOrder == ByteOrder::Native) {
-		memcpy(&ZSTR_VAL(buffer)[offset], reinterpret_cast<const char*>(&value), sizeof(TValue));
-	} else {
-		Flipper<TValue> flipper;
-		flipper.value = value;
+	Flipper<TValue> flipper;
+	flipper.value = value;
 
-		for (unsigned int i = 0; i < sizeof(TValue); i++) {
-			ZSTR_VAL(buffer)[i + offset] = flipper.bytes[sizeof(TValue) - i - 1];
-		}
+	if (byteOrder != ByteOrder::Native) {
+		std::reverse(std::begin(flipper.bytes), std::end(flipper.bytes));
 	}
+
+	memcpy(&ZSTR_VAL(buffer)[offset], flipper.bytes, sizeof(flipper.bytes));
 
 	offset += sizeof(TValue);
 

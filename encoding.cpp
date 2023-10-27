@@ -565,6 +565,17 @@ static PHP_METHOD(ByteBuffer, rewind) {
 	object->offset = 0;
 }
 
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_getUnreadLength, 0, 0, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+
+static PHP_METHOD(ByteBuffer, getUnreadLength) {
+	zend_parse_parameters_none_throw();
+
+	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
+
+	RETURN_LONG(object->used - object->offset);
+}
+
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer___serialize, 0, 0, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
@@ -720,6 +731,8 @@ static zend_function_entry byte_buffer_methods[] = {
 	PHP_ME(ByteBuffer, trim, ByteBuffer_trim, ZEND_ACC_PUBLIC)
 
 	PHP_ME(ByteBuffer, rewind, ByteBuffer_rewind, ZEND_ACC_PUBLIC)
+
+	PHP_ME(ByteBuffer, getUnreadLength, ByteBuffer_getUnreadLength, ZEND_ACC_PUBLIC)
 
 	PHP_ME(ByteBuffer, __serialize, ByteBuffer___serialize, ZEND_ACC_PUBLIC)
 	PHP_ME(ByteBuffer, __unserialize, ByteBuffer___unserialize, ZEND_ACC_PUBLIC)

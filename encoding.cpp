@@ -347,12 +347,18 @@ static inline zend_string* writeSignedVarInt(zend_string* buffer, size_t& offset
 	return writeUnsignedVarInt<TUnsignedType>(buffer, offset, (static_cast<TUnsignedType>(value) << 1) ^ mask);
 }
 
+static void byte_buffer_init_properties(byte_buffer_zend_object* object, zend_string* buffer, size_t offset, size_t used) {
+	object->buffer = buffer;
+	zend_string_addref(buffer);
+	object->offset = offset;
+	object->used = used;
+}
+
 static zend_object* byte_buffer_new(zend_class_entry* ce) {
 	auto object = alloc_custom_zend_object<byte_buffer_zend_object>(ce, &byte_buffer_zend_object_handlers);
 
-	object->offset = 0;
-	object->used = 0;
-	object->buffer = zend_empty_string;
+	byte_buffer_init_properties(object, zend_empty_string, 0, 0);
+
 	return &object->std;
 }
 
@@ -362,10 +368,7 @@ static zend_object* byte_buffer_clone(zend_object* object) {
 
 	zend_objects_clone_members(&new_object->std, &old_object->std);
 
-	new_object->buffer = old_object->buffer;
-	zend_string_addref(new_object->buffer);
-	new_object->offset = old_object->offset;
-	new_object->used = old_object->used;
+	byte_buffer_init_properties(new_object, old_object->buffer, old_object->offset, old_object->used);
 
 	return &new_object->std;
 }
@@ -412,9 +415,7 @@ static PHP_METHOD(ByteBuffer, __construct) {
 	if (buffer == NULL) {
 		buffer = zend_empty_string;
 	}
-	object->buffer = buffer;
-	object->used = ZSTR_LEN(buffer);
-	zend_string_addref(buffer);
+	byte_buffer_init_properties(object, buffer, 0, ZSTR_LEN(buffer));
 }
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_toString, 0, 0, IS_STRING, 0)
@@ -612,10 +613,8 @@ static PHP_METHOD(ByteBuffer, __unserialize) {
 	}
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
-	object->buffer = Z_STR_P(buffer);
-	zend_string_addref(object->buffer);
 
-	object->offset = static_cast<size_t>(Z_LVAL_P(offset));
+	byte_buffer_init_properties(object, Z_STR_P(buffer), static_cast<size_t>(Z_LVAL_P(offset)), Z_STRLEN_P(buffer));
 }
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer___debugInfo, 0, 0, IS_ARRAY, 0)

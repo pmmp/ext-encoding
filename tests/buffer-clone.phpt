@@ -5,6 +5,8 @@ byte_buffer->used wasn't being copied during clones, leading to the cloned objec
 --FILE--
 <?php
 
+use pmmp\encoding\ByteBuffer;
+
 $buffer = new ByteBuffer("Some Data");
 $buffer2 = clone $buffer;
 var_dump($buffer);

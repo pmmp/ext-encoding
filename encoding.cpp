@@ -365,6 +365,7 @@ static zend_object* byte_buffer_clone(zend_object* object) {
 	new_object->buffer = old_object->buffer;
 	zend_string_addref(new_object->buffer);
 	new_object->offset = old_object->offset;
+	new_object->used = old_object->used;
 
 	return &new_object->std;
 }

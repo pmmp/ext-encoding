@@ -14,6 +14,7 @@ extern "C" {
 #include "ZendUtil.h"
 #include <algorithm>
 #include <iterator>
+#include <type_traits>
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_read_integer, 0, 0, IS_LONG, 0)
 ZEND_END_ARG_INFO()
@@ -137,7 +138,7 @@ static inline bool readInt24(unsigned char* bytes, size_t used, size_t& offset, 
 		result |= bytes[offset] << 16;
 	}
 
-	const size_t SIGNED_SHIFT = (sizeof(TValue) - SIZE) * CHAR_BIT;
+	const size_t SIGNED_SHIFT = std::is_signed<TValue>::value ? (sizeof(TValue) - SIZE) * CHAR_BIT : 0;
 	if (SIGNED_SHIFT > 0) {
 		result = (result << SIGNED_SHIFT) >> SIGNED_SHIFT;
 	}

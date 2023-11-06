@@ -117,7 +117,7 @@ static inline bool readFixedSizeType(unsigned char* bytes, size_t used, size_t& 
 	return true;
 }
 
-template<typename TValue, ByteOrder byteOrder, unsigned int signedShift>
+template<typename TValue, ByteOrder byteOrder>
 static inline bool readInt24(unsigned char* bytes, size_t used, size_t& offset, TValue& result) {
 	const size_t SIZE = 3;
 
@@ -137,8 +137,9 @@ static inline bool readInt24(unsigned char* bytes, size_t used, size_t& offset, 
 		result |= bytes[offset] << 16;
 	}
 
-	if (signedShift > 0) {
-		result = (result << signedShift) >> signedShift;
+	const size_t SIGNED_SHIFT = (sizeof(TValue) - SIZE) * CHAR_BIT;
+	if (SIGNED_SHIFT > 0) {
+		result = (result << SIGNED_SHIFT) >> SIGNED_SHIFT;
 	}
 
 	offset += SIZE;
@@ -685,16 +686,16 @@ PHP_RINIT_FUNCTION(encoding)
 	ZEND_RAW_FENTRY("read" zend_name, (zif_readType<native_type, readByte<native_type>, zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC) \
 	ZEND_RAW_FENTRY("write" zend_name, (zif_writeType<native_type, zend_parse_parameters_long_wrapper<native_type>, writeByte<native_type>>), arginfo_write_integer, ZEND_ACC_PUBLIC)
 
-#define READ_TRIAD_ENTRY(zend_name, native_type, shift) \
-	ZEND_RAW_FENTRY("read" zend_name "BE", (zif_readType<native_type, readInt24<native_type, ByteOrder::BigEndian, shift>, zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC) \
-	ZEND_RAW_FENTRY("read" zend_name "LE", (zif_readType<native_type, readInt24<native_type, ByteOrder::LittleEndian, shift>, zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC)
+#define READ_TRIAD_ENTRY(zend_name, native_type) \
+	ZEND_RAW_FENTRY("read" zend_name "BE", (zif_readType<native_type, readInt24<native_type, ByteOrder::BigEndian>, zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC) \
+	ZEND_RAW_FENTRY("read" zend_name "LE", (zif_readType<native_type, readInt24<native_type, ByteOrder::LittleEndian>, zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC)
 
 #define WRITE_TRIAD_ENTRY(zend_name, native_type) \
 	ZEND_RAW_FENTRY("write" zend_name "BE", (zif_writeType<native_type, zend_parse_parameters_long_wrapper<native_type>, writeInt24<native_type, ByteOrder::BigEndian>>), arginfo_write_integer, ZEND_ACC_PUBLIC) \
 	ZEND_RAW_FENTRY("write" zend_name "LE", (zif_writeType<native_type, zend_parse_parameters_long_wrapper<native_type>, writeInt24<native_type, ByteOrder::LittleEndian>>), arginfo_write_integer, ZEND_ACC_PUBLIC)
 
-#define READ_WRITE_TRIAD_ENTRY(zend_name, native_type, readShift) \
-	READ_TRIAD_ENTRY(zend_name, native_type, readShift) \
+#define READ_WRITE_TRIAD_ENTRY(zend_name, native_type) \
+	READ_TRIAD_ENTRY(zend_name, native_type) \
 	WRITE_TRIAD_ENTRY(zend_name, native_type)
 
 static zend_function_entry byte_buffer_methods[] = {
@@ -713,8 +714,8 @@ static zend_function_entry byte_buffer_methods[] = {
 	READ_WRITE_VARINT_ENTRY("Int", uint32_t, int32_t)
 	READ_WRITE_VARINT_ENTRY("Long", uint64_t, int64_t)
 
-	READ_WRITE_TRIAD_ENTRY("UnsignedTriad", uint32_t, 0)
-	READ_WRITE_TRIAD_ENTRY("SignedTriad", int32_t, 8)
+	READ_WRITE_TRIAD_ENTRY("UnsignedTriad", uint32_t)
+	READ_WRITE_TRIAD_ENTRY("SignedTriad", int32_t)
 
 	PHP_ME(ByteBuffer, __construct, ByteBuffer___construct, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
 	PHP_ME(ByteBuffer, toString, ByteBuffer_toString, ZEND_ACC_PUBLIC)

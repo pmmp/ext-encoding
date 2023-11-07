@@ -10,6 +10,8 @@ extern "C" {
 #include "php_encoding.h"
 #include "Zend/zend_exceptions.h"
 #include "ext/spl/spl_exceptions.h"
+#include "stubs/BaseByteBuffer_arginfo.h"
+#include "stubs/DataDecodeException_arginfo.h"
 }
 #include "ZendUtil.h"
 #include <algorithm>
@@ -387,11 +389,9 @@ static int byte_buffer_compare_objects(zval* obj1, zval* obj2) {
 	return 1;
 }
 
-ZEND_BEGIN_ARG_INFO_EX(ByteBuffer___construct, 0, 0, 0)
-	ZEND_ARG_TYPE_INFO(0, buffer, IS_STRING, 0)
-ZEND_END_ARG_INFO()
+#define BYTE_BUFFER_METHOD(name) PHP_METHOD(pmmp_encoding_BaseByteBuffer, name)
 
-static PHP_METHOD(ByteBuffer, __construct) {
+static BYTE_BUFFER_METHOD(__construct) {
 	zend_string* buffer = NULL;
 	byte_buffer_zend_object* object;
 
@@ -411,21 +411,14 @@ static PHP_METHOD(ByteBuffer, __construct) {
 	byte_buffer_init_properties(object, buffer, 0, ZSTR_LEN(buffer));
 }
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_toString, 0, 0, IS_STRING, 0)
-ZEND_END_ARG_INFO()
-
-static PHP_METHOD(ByteBuffer, toString) {
+static BYTE_BUFFER_METHOD(toString) {
 	zend_parse_parameters_none_throw();
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
 	RETURN_STRINGL(ZSTR_VAL(object->buffer), object->used);
 }
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_readByteArray, 0, 1, IS_STRING, 0)
-	ZEND_ARG_TYPE_INFO(0, length, IS_LONG, 0)
-ZEND_END_ARG_INFO()
-
-static PHP_METHOD(ByteBuffer, readByteArray) {
+static BYTE_BUFFER_METHOD(readByteArray) {
 	zend_long zlength;
 	byte_buffer_zend_object* object;
 
@@ -454,11 +447,7 @@ static PHP_METHOD(ByteBuffer, readByteArray) {
 	object->offset += length;
 }
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_writeByteArray, 0, 1, IS_VOID, 0)
-	ZEND_ARG_TYPE_INFO(0, value, IS_STRING, 0)
-ZEND_END_ARG_INFO()
-
-static PHP_METHOD(ByteBuffer, writeByteArray) {
+static BYTE_BUFFER_METHOD(writeByteArray) {
 	zend_string* value;
 	byte_buffer_zend_object* object;
 
@@ -479,21 +468,14 @@ static PHP_METHOD(ByteBuffer, writeByteArray) {
 	}
 }
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_getOffset, 0, 0, IS_LONG, 0)
-ZEND_END_ARG_INFO()
-
-static PHP_METHOD(ByteBuffer, getOffset) {
+static BYTE_BUFFER_METHOD(getOffset) {
 	zend_parse_parameters_none_throw();
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
 	RETURN_LONG(object->offset);
 }
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_setOffset, 0, 1, IS_VOID, 0)
-	ZEND_ARG_TYPE_INFO(0, offset, IS_LONG, 0)
-ZEND_END_ARG_INFO()
-
-static PHP_METHOD(ByteBuffer, setOffset) {
+static BYTE_BUFFER_METHOD(setOffset) {
 	zend_long offset;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
@@ -509,21 +491,14 @@ static PHP_METHOD(ByteBuffer, setOffset) {
 	object->offset = static_cast<size_t>(offset);
 }
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_getReserved, 0, 0, IS_LONG, 0)
-ZEND_END_ARG_INFO()
-
-static PHP_METHOD(ByteBuffer, getReserved) {
+static BYTE_BUFFER_METHOD(getReserved) {
 	zend_parse_parameters_none_throw();
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
 	RETURN_LONG(ZSTR_LEN(object->buffer));
 }
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_reserve, 0, 1, IS_VOID, 0)
-	ZEND_ARG_TYPE_INFO(0, length, IS_LONG, 0)
-ZEND_END_ARG_INFO()
-
-static PHP_METHOD(ByteBuffer, reserve) {
+static BYTE_BUFFER_METHOD(reserve) {
 	zend_long zlength;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
@@ -538,10 +513,7 @@ static PHP_METHOD(ByteBuffer, reserve) {
 	extendBuffer(object->buffer, static_cast<size_t>(zlength), 0);
 }
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_trim, 0, 0, IS_VOID, 0)
-ZEND_END_ARG_INFO()
-
-static PHP_METHOD(ByteBuffer, trim) {
+static BYTE_BUFFER_METHOD(trim) {
 	zend_parse_parameters_none_throw();
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
@@ -550,20 +522,14 @@ static PHP_METHOD(ByteBuffer, trim) {
 	}
 }
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_rewind, 0, 0, IS_VOID, 0)
-ZEND_END_ARG_INFO()
-
-static PHP_METHOD(ByteBuffer, rewind) {
+static BYTE_BUFFER_METHOD(rewind) {
 	zend_parse_parameters_none_throw();
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
 	object->offset = 0;
 }
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_getUnreadLength, 0, 0, IS_LONG, 0)
-ZEND_END_ARG_INFO()
-
-static PHP_METHOD(ByteBuffer, getUnreadLength) {
+static BYTE_BUFFER_METHOD(getUnreadLength) {
 	zend_parse_parameters_none_throw();
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
@@ -571,10 +537,7 @@ static PHP_METHOD(ByteBuffer, getUnreadLength) {
 	RETURN_LONG(object->used - object->offset);
 }
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer___serialize, 0, 0, IS_ARRAY, 0)
-ZEND_END_ARG_INFO()
-
-static PHP_METHOD(ByteBuffer, __serialize) {
+static BYTE_BUFFER_METHOD(__serialize) {
 	zend_parse_parameters_none_throw();
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
@@ -583,11 +546,7 @@ static PHP_METHOD(ByteBuffer, __serialize) {
 	add_assoc_long(return_value, "offset", object->offset);
 }
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer___unserialize, 0, 1, IS_VOID, 0)
-	ZEND_ARG_ARRAY_INFO(0, data, 0)
-ZEND_END_ARG_INFO()
-
-static PHP_METHOD(ByteBuffer, __unserialize) {
+static BYTE_BUFFER_METHOD(__unserialize) {
 	HashTable* data;
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
@@ -610,10 +569,7 @@ static PHP_METHOD(ByteBuffer, __unserialize) {
 	byte_buffer_init_properties(object, Z_STR_P(buffer), static_cast<size_t>(Z_LVAL_P(offset)), Z_STRLEN_P(buffer));
 }
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer___debugInfo, 0, 0, IS_ARRAY, 0)
-ZEND_END_ARG_INFO()
-
-static PHP_METHOD(ByteBuffer, __debugInfo) {
+static BYTE_BUFFER_METHOD(__debugInfo) {
 	zend_parse_parameters_none_throw();
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
@@ -709,41 +665,19 @@ static zend_function_entry byte_buffer_methods[] = {
 	READ_WRITE_TRIAD_ENTRY("UnsignedTriad", uint32_t)
 	READ_WRITE_TRIAD_ENTRY("SignedTriad", int32_t)
 
-	PHP_ME(ByteBuffer, __construct, ByteBuffer___construct, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
-	PHP_ME(ByteBuffer, toString, ByteBuffer_toString, ZEND_ACC_PUBLIC)
-
-	PHP_ME(ByteBuffer, readByteArray, ByteBuffer_readByteArray, ZEND_ACC_PUBLIC)
-	PHP_ME(ByteBuffer, writeByteArray, ByteBuffer_writeByteArray, ZEND_ACC_PUBLIC)
-
-	PHP_ME(ByteBuffer, getOffset, ByteBuffer_getOffset, ZEND_ACC_PUBLIC)
-	PHP_ME(ByteBuffer, setOffset, ByteBuffer_setOffset, ZEND_ACC_PUBLIC)
-
-	PHP_ME(ByteBuffer, getReserved, ByteBuffer_getReserved, ZEND_ACC_PUBLIC)
-	PHP_ME(ByteBuffer, reserve, ByteBuffer_reserve, ZEND_ACC_PUBLIC)
-
-	PHP_ME(ByteBuffer, trim, ByteBuffer_trim, ZEND_ACC_PUBLIC)
-
-	PHP_ME(ByteBuffer, rewind, ByteBuffer_rewind, ZEND_ACC_PUBLIC)
-
-	PHP_ME(ByteBuffer, getUnreadLength, ByteBuffer_getUnreadLength, ZEND_ACC_PUBLIC)
-
-	PHP_ME(ByteBuffer, __serialize, ByteBuffer___serialize, ZEND_ACC_PUBLIC)
-	PHP_ME(ByteBuffer, __unserialize, ByteBuffer___unserialize, ZEND_ACC_PUBLIC)
-	PHP_ME(ByteBuffer, __debugInfo, ByteBuffer___debugInfo, ZEND_ACC_PUBLIC)
-
 	PHP_FE_END
 };
 
 PHP_MINIT_FUNCTION(encoding) {
-	zend_class_entry ce;
-	INIT_CLASS_ENTRY(ce, "pmmp\\encoding\\DataDecodeException", NULL);
-	data_decode_exception_ce = zend_register_internal_class_ex(&ce, spl_ce_RuntimeException);
-	data_decode_exception_ce->ce_flags |= ZEND_ACC_FINAL;
+	data_decode_exception_ce = register_class_pmmp_encoding_DataDecodeException(spl_ce_RuntimeException);
 
+	zend_class_entry *base_byte_buffer = register_class_pmmp_encoding_BaseByteBuffer();
+	base_byte_buffer->create_object = byte_buffer_new;
+
+	zend_class_entry ce;
 	INIT_CLASS_ENTRY(ce, "pmmp\\encoding\\ByteBuffer", byte_buffer_methods);
-	byte_buffer_ce = zend_register_internal_class(&ce);
+	byte_buffer_ce = zend_register_internal_class_ex(&ce, base_byte_buffer);
 	byte_buffer_ce->ce_flags |= ZEND_ACC_FINAL | ZEND_ACC_NO_DYNAMIC_PROPERTIES;
-	byte_buffer_ce->create_object = byte_buffer_new;
 
 	byte_buffer_zend_object_handlers = *zend_get_std_object_handlers();
 	byte_buffer_zend_object_handlers.offset = XtOffsetOf(byte_buffer_zend_object, std);

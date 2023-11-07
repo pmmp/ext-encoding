@@ -391,7 +391,7 @@ static int byte_buffer_compare_objects(zval* obj1, zval* obj2) {
 
 #define BYTE_BUFFER_METHOD(name) PHP_METHOD(pmmp_encoding_BaseByteBuffer, name)
 
-static BYTE_BUFFER_METHOD(__construct) {
+BYTE_BUFFER_METHOD(__construct) {
 	zend_string* buffer = NULL;
 	byte_buffer_zend_object* object;
 
@@ -411,14 +411,14 @@ static BYTE_BUFFER_METHOD(__construct) {
 	byte_buffer_init_properties(object, buffer, 0, ZSTR_LEN(buffer));
 }
 
-static BYTE_BUFFER_METHOD(toString) {
+BYTE_BUFFER_METHOD(toString) {
 	zend_parse_parameters_none_throw();
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
 	RETURN_STRINGL(ZSTR_VAL(object->buffer), object->used);
 }
 
-static BYTE_BUFFER_METHOD(readByteArray) {
+BYTE_BUFFER_METHOD(readByteArray) {
 	zend_long zlength;
 	byte_buffer_zend_object* object;
 
@@ -447,7 +447,7 @@ static BYTE_BUFFER_METHOD(readByteArray) {
 	object->offset += length;
 }
 
-static BYTE_BUFFER_METHOD(writeByteArray) {
+BYTE_BUFFER_METHOD(writeByteArray) {
 	zend_string* value;
 	byte_buffer_zend_object* object;
 
@@ -468,14 +468,14 @@ static BYTE_BUFFER_METHOD(writeByteArray) {
 	}
 }
 
-static BYTE_BUFFER_METHOD(getOffset) {
+BYTE_BUFFER_METHOD(getOffset) {
 	zend_parse_parameters_none_throw();
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
 	RETURN_LONG(object->offset);
 }
 
-static BYTE_BUFFER_METHOD(setOffset) {
+BYTE_BUFFER_METHOD(setOffset) {
 	zend_long offset;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
@@ -491,14 +491,14 @@ static BYTE_BUFFER_METHOD(setOffset) {
 	object->offset = static_cast<size_t>(offset);
 }
 
-static BYTE_BUFFER_METHOD(getReserved) {
+BYTE_BUFFER_METHOD(getReserved) {
 	zend_parse_parameters_none_throw();
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
 	RETURN_LONG(ZSTR_LEN(object->buffer));
 }
 
-static BYTE_BUFFER_METHOD(reserve) {
+BYTE_BUFFER_METHOD(reserve) {
 	zend_long zlength;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
@@ -513,7 +513,7 @@ static BYTE_BUFFER_METHOD(reserve) {
 	extendBuffer(object->buffer, static_cast<size_t>(zlength), 0);
 }
 
-static BYTE_BUFFER_METHOD(trim) {
+BYTE_BUFFER_METHOD(trim) {
 	zend_parse_parameters_none_throw();
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
@@ -522,14 +522,14 @@ static BYTE_BUFFER_METHOD(trim) {
 	}
 }
 
-static BYTE_BUFFER_METHOD(rewind) {
+BYTE_BUFFER_METHOD(rewind) {
 	zend_parse_parameters_none_throw();
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
 	object->offset = 0;
 }
 
-static BYTE_BUFFER_METHOD(getUnreadLength) {
+BYTE_BUFFER_METHOD(getUnreadLength) {
 	zend_parse_parameters_none_throw();
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
@@ -537,7 +537,7 @@ static BYTE_BUFFER_METHOD(getUnreadLength) {
 	RETURN_LONG(object->used - object->offset);
 }
 
-static BYTE_BUFFER_METHOD(__serialize) {
+BYTE_BUFFER_METHOD(__serialize) {
 	zend_parse_parameters_none_throw();
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
@@ -546,7 +546,7 @@ static BYTE_BUFFER_METHOD(__serialize) {
 	add_assoc_long(return_value, "offset", object->offset);
 }
 
-static BYTE_BUFFER_METHOD(__unserialize) {
+BYTE_BUFFER_METHOD(__unserialize) {
 	HashTable* data;
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
@@ -569,7 +569,7 @@ static BYTE_BUFFER_METHOD(__unserialize) {
 	byte_buffer_init_properties(object, Z_STR_P(buffer), static_cast<size_t>(Z_LVAL_P(offset)), Z_STRLEN_P(buffer));
 }
 
-static BYTE_BUFFER_METHOD(__debugInfo) {
+BYTE_BUFFER_METHOD(__debugInfo) {
 	zend_parse_parameters_none_throw();
 
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));

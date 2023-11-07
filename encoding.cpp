@@ -70,13 +70,15 @@ static inline void zval_double_wrapper(zval* zv, TValue value) {
 	ZVAL_DOUBLE(zv, value);
 }
 
+#define BYTE_BUFFER_THIS() fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS))
+
 template<typename TValue, bool (*readTypeFunc)(unsigned char* bytes, size_t used, size_t& offset, TValue& result), void(*assignResult)(zval*, TValue)>
 void ZEND_FASTCALL zif_readType(INTERNAL_FUNCTION_PARAMETERS) {
 	byte_buffer_zend_object* object;
 
 	zend_parse_parameters_none_throw();
 
-	object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
+	object = BYTE_BUFFER_THIS();
 
 	TValue result;
 	auto bytes = reinterpret_cast<unsigned char*>(ZSTR_VAL(object->buffer));
@@ -234,7 +236,7 @@ void ZEND_FASTCALL zif_writeType(INTERNAL_FUNCTION_PARAMETERS) {
 	TValue value;
 	byte_buffer_zend_object* object;
 
-	object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
+	object = BYTE_BUFFER_THIS();
 
 	//offsets beyond the end of the buffer are allowed, and result in automatic buffer extension
 	if (!parseParametersFunc(execute_data, value)) {
@@ -400,7 +402,7 @@ BYTE_BUFFER_METHOD(__construct) {
 		Z_PARAM_STR(buffer)
 	ZEND_PARSE_PARAMETERS_END();
 
-	object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
+	object = BYTE_BUFFER_THIS();
 	if (object->buffer) {
 		zend_string_release_ex(object->buffer, 0);
 	}
@@ -414,7 +416,7 @@ BYTE_BUFFER_METHOD(__construct) {
 BYTE_BUFFER_METHOD(toString) {
 	zend_parse_parameters_none_throw();
 
-	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
+	auto object = BYTE_BUFFER_THIS();
 	RETURN_STRINGL(ZSTR_VAL(object->buffer), object->used);
 }
 
@@ -436,7 +438,7 @@ BYTE_BUFFER_METHOD(readByteArray) {
 
 	size_t length = static_cast<size_t>(zlength);
 
-	object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
+	object = BYTE_BUFFER_THIS();
 
 	if (object->used - object->offset < length) {
 		zend_throw_exception_ex(data_decode_exception_ce, 0, "Need at least %zu bytes, but only have %zu bytes", length, object->used - object->offset);
@@ -456,7 +458,7 @@ BYTE_BUFFER_METHOD(writeByteArray) {
 	ZEND_PARSE_PARAMETERS_END();
 
 
-	object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
+	object = BYTE_BUFFER_THIS();
 
 	auto size = ZSTR_LEN(value);
 
@@ -471,7 +473,7 @@ BYTE_BUFFER_METHOD(writeByteArray) {
 BYTE_BUFFER_METHOD(getOffset) {
 	zend_parse_parameters_none_throw();
 
-	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
+	auto object = BYTE_BUFFER_THIS();
 	RETURN_LONG(object->offset);
 }
 
@@ -482,7 +484,7 @@ BYTE_BUFFER_METHOD(setOffset) {
 		Z_PARAM_LONG(offset)
 	ZEND_PARSE_PARAMETERS_END();
 
-	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
+	auto object = BYTE_BUFFER_THIS();
 	if (offset < 0 || static_cast<size_t>(offset) > object->used) {
 		zend_value_error("Offset must not be less than zero or greater than the buffer size");
 		return;
@@ -494,7 +496,7 @@ BYTE_BUFFER_METHOD(setOffset) {
 BYTE_BUFFER_METHOD(getReserved) {
 	zend_parse_parameters_none_throw();
 
-	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
+	auto object = BYTE_BUFFER_THIS();
 	RETURN_LONG(ZSTR_LEN(object->buffer));
 }
 
@@ -509,14 +511,14 @@ BYTE_BUFFER_METHOD(reserve) {
 		zend_value_error("Length must be greater than zero");
 		return;
 	}
-	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
+	auto object = BYTE_BUFFER_THIS();
 	extendBuffer(object->buffer, static_cast<size_t>(zlength), 0);
 }
 
 BYTE_BUFFER_METHOD(trim) {
 	zend_parse_parameters_none_throw();
 
-	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
+	auto object = BYTE_BUFFER_THIS();
 	if (ZSTR_LEN(object->buffer) > object->used) {
 		object->buffer = zend_string_truncate(object->buffer, object->used, 0);
 	}
@@ -525,14 +527,14 @@ BYTE_BUFFER_METHOD(trim) {
 BYTE_BUFFER_METHOD(rewind) {
 	zend_parse_parameters_none_throw();
 
-	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
+	auto object = BYTE_BUFFER_THIS();
 	object->offset = 0;
 }
 
 BYTE_BUFFER_METHOD(getUnreadLength) {
 	zend_parse_parameters_none_throw();
 
-	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
+	auto object = BYTE_BUFFER_THIS();
 
 	RETURN_LONG(object->used - object->offset);
 }
@@ -540,7 +542,7 @@ BYTE_BUFFER_METHOD(getUnreadLength) {
 BYTE_BUFFER_METHOD(__serialize) {
 	zend_parse_parameters_none_throw();
 
-	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
+	auto object = BYTE_BUFFER_THIS();
 	array_init(return_value);
 	add_assoc_stringl(return_value, "buffer", ZSTR_VAL(object->buffer), object->used);
 	add_assoc_long(return_value, "offset", object->offset);
@@ -564,7 +566,7 @@ BYTE_BUFFER_METHOD(__unserialize) {
 		return;
 	}
 
-	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
+	auto object = BYTE_BUFFER_THIS();
 
 	byte_buffer_init_properties(object, Z_STR_P(buffer), static_cast<size_t>(Z_LVAL_P(offset)), Z_STRLEN_P(buffer));
 }
@@ -572,7 +574,7 @@ BYTE_BUFFER_METHOD(__unserialize) {
 BYTE_BUFFER_METHOD(__debugInfo) {
 	zend_parse_parameters_none_throw();
 
-	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
+	auto object = BYTE_BUFFER_THIS();
 	array_init(return_value);
 	add_assoc_stringl(return_value, "buffer", ZSTR_VAL(object->buffer), object->used);
 	add_assoc_long(return_value, "offset", object->offset);

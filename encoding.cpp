@@ -225,7 +225,7 @@ template<typename TValue>
 using parseParametersFunc_t = bool (*)(zend_execute_data* execute_data, TValue& value);
 
 template<typename TValue>
-using writeTypeFunc_t = zend_string* (*)(zend_string *buffer, size_t& offset, TValue value);
+using writeTypeFunc_t = void (*)(zend_string*& buffer, size_t& offset, TValue value);
 
 template<typename TValue, parseParametersFunc_t<TValue> parseParametersFunc, writeTypeFunc_t<TValue> writeTypeFunc>
 void ZEND_FASTCALL zif_writeType(INTERNAL_FUNCTION_PARAMETERS) {
@@ -239,13 +239,13 @@ void ZEND_FASTCALL zif_writeType(INTERNAL_FUNCTION_PARAMETERS) {
 		return;
 	}
 
-	object->buffer = writeTypeFunc(object->buffer, object->offset, value);
+	writeTypeFunc(object->buffer, object->offset, value);
 	if (object->offset > object->used) {
 		object->used = object->offset;
 	}
 }
 
-static inline zend_string* extendBuffer(zend_string* buffer, size_t offset, size_t usedBytes) {
+static inline void extendBuffer(zend_string*& buffer, size_t offset, size_t usedBytes) {
 	size_t requiredSize = offset + usedBytes;
 	if (ZSTR_LEN(buffer) < requiredSize) {
 		size_t doubleSize = ZSTR_LEN(buffer) * 2;
@@ -254,24 +254,20 @@ static inline zend_string* extendBuffer(zend_string* buffer, size_t offset, size
 	} else {
 		buffer = zend_string_separate(buffer, 0);
 	}
-
-	return buffer;
 }
 
 template<typename TValue>
-static zend_string* writeByte(zend_string* buffer, size_t& offset, TValue value) {
-	buffer = extendBuffer(buffer, offset, sizeof(TValue));
+static void writeByte(zend_string*& buffer, size_t& offset, TValue value) {
+	extendBuffer(buffer, offset, sizeof(TValue));
 
 	ZSTR_VAL(buffer)[offset] = *reinterpret_cast<char*>(&value);
 
 	offset += sizeof(TValue);
-
-	return buffer;
 }
 
 template<typename TValue, ByteOrder byteOrder>
-static zend_string* writeFixedSizeType(zend_string* buffer, size_t& offset, TValue value) {
-	buffer = extendBuffer(buffer, offset, sizeof(TValue));
+static void writeFixedSizeType(zend_string*& buffer, size_t& offset, TValue value) {
+	extendBuffer(buffer, offset, sizeof(TValue));
 
 	Flipper<TValue> flipper;
 	flipper.value = value;
@@ -283,14 +279,12 @@ static zend_string* writeFixedSizeType(zend_string* buffer, size_t& offset, TVal
 	memcpy(&ZSTR_VAL(buffer)[offset], flipper.bytes, sizeof(flipper.bytes));
 
 	offset += sizeof(TValue);
-
-	return buffer;
 }
 
 template<typename TValue, ByteOrder byteOrder>
-static zend_string* writeInt24(zend_string* buffer, size_t& offset, TValue value) {
+static void writeInt24(zend_string*& buffer, size_t& offset, TValue value) {
 	const size_t SIZE = 3;
-	buffer = extendBuffer(buffer, offset, SIZE);
+	extendBuffer(buffer, offset, SIZE);
 
 	if (byteOrder == ByteOrder::LittleEndian) {
 		ZSTR_VAL(buffer)[offset    ] = value & 0xff;
@@ -303,12 +297,10 @@ static zend_string* writeInt24(zend_string* buffer, size_t& offset, TValue value
 	}
 
 	offset += SIZE;
-
-	return buffer;
 }
 
 template<typename TValue>
-static inline zend_string* writeUnsignedVarInt(zend_string* buffer, size_t& offset, TValue value) {
+static inline void writeUnsignedVarInt(zend_string*& buffer, size_t& offset, TValue value) {
 	const auto TYPE_BITS = sizeof(TValue) * CHAR_BIT;
 	char result[VarIntConstants::MAX_BYTES<TYPE_BITS>];
 
@@ -323,11 +315,11 @@ static inline zend_string* writeUnsignedVarInt(zend_string* buffer, size_t& offs
 			result[i] = nextByte;
 
 			auto usedBytes = i + 1;
-			buffer = extendBuffer(buffer, offset, usedBytes);
+			extendBuffer(buffer, offset, usedBytes);
 			memcpy(&ZSTR_VAL(buffer)[offset], &result[0], usedBytes);
 			offset += usedBytes;
 
-			return buffer;
+			return;
 		}
 
 		result[i] = nextByte | VarIntConstants::MSB_MASK;
@@ -335,18 +327,17 @@ static inline zend_string* writeUnsignedVarInt(zend_string* buffer, size_t& offs
 	}
 
 	zend_value_error("Value too large to be encoded as a VarInt");
-	return buffer;
 }
 
 template<typename TUnsignedType, typename TSignedType>
-static inline zend_string* writeSignedVarInt(zend_string* buffer, size_t& offset, TSignedType value) {
+static inline void writeSignedVarInt(zend_string*& buffer, size_t& offset, TSignedType value) {
 	TUnsignedType mask = 0;
 	if (value < 0) {
 		//we don't know the type of TUnsignedType here, can't use ~0 directly (the compiler will optimise this anyway)
 		mask = ~mask;
 	}
 
-	return writeUnsignedVarInt<TUnsignedType>(buffer, offset, (static_cast<TUnsignedType>(value) << 1) ^ mask);
+	writeUnsignedVarInt<TUnsignedType>(buffer, offset, (static_cast<TUnsignedType>(value) << 1) ^ mask);
 }
 
 static void byte_buffer_init_properties(byte_buffer_zend_object* object, zend_string* buffer, size_t offset, size_t used) {
@@ -480,7 +471,7 @@ static PHP_METHOD(ByteBuffer, writeByteArray) {
 
 	auto size = ZSTR_LEN(value);
 
-	object->buffer = extendBuffer(object->buffer, object->offset, size);
+	extendBuffer(object->buffer, object->offset, size);
 	memcpy(ZSTR_VAL(object->buffer) + object->offset, ZSTR_VAL(value), size);
 	object->offset += size;
 	if (object->offset > object->used) {
@@ -544,7 +535,7 @@ static PHP_METHOD(ByteBuffer, reserve) {
 		return;
 	}
 	auto object = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(ZEND_THIS));
-	object->buffer = extendBuffer(object->buffer, static_cast<size_t>(zlength), 0);
+	extendBuffer(object->buffer, static_cast<size_t>(zlength), 0);
 }
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ByteBuffer_trim, 0, 0, IS_VOID, 0)

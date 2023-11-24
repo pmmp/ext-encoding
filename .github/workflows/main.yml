@@ -21,6 +21,10 @@ jobs:
         debug: [enable, disable]
         zts: [enable, disable]
 
+    env:
+      CFLAGS: "-march=x86-64"
+      CXXFLAGS: "-march=x86-64"
+
     steps:
       - uses: actions/checkout@v4
 
@@ -36,7 +40,7 @@ jobs:
         id: php-build-cache
         with:
           path: ${{ github.workspace }}/php 
-          key: php-${{ matrix.php }}-debug-${{ matrix.debug }}-valgrind-${{ matrix.valgrind }}-zts-${{ matrix.zts }}
+          key: php-${{ matrix.php }}-debug-${{ matrix.debug }}-valgrind-${{ matrix.valgrind }}-zts-${{ matrix.zts }}-generic
 
       - name: Install PHP build dependencies
         if: steps.php-build-cache.outputs.cache-hit != 'true'

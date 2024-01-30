@@ -565,7 +565,7 @@ BYTE_BUFFER_METHOD(__serialize) {
 }
 
 static zval* fetch_serialized_property(HashTable* data, const char* name, int type) {
-	zval* zv = zend_hash_str_find(data, ZEND_STRL(name));
+	zval* zv = zend_hash_str_find(data, name, strlen(name));
 	if (zv == NULL) {
 		zend_throw_exception_ex(NULL, 0, "Serialized data is missing \"%s\"", name);
 		return NULL;

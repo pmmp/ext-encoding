@@ -17,17 +17,21 @@ var_dump($buffer2->toString());
 
 ?>
 --EXPECTF--
-object(pmmp\encoding\ByteBuffer)#%d (2) {
+object(pmmp\encoding\ByteBuffer)#%d (3) {
   ["buffer"]=>
   string(9) "Some Data"
-  ["offset"]=>
+  ["read_offset"]=>
   int(0)
+  ["write_offset"]=>
+  int(9)
 }
-object(pmmp\encoding\ByteBuffer)#%d (2) {
+object(pmmp\encoding\ByteBuffer)#%d (3) {
   ["buffer"]=>
   string(9) "Some Data"
-  ["offset"]=>
+  ["read_offset"]=>
   int(0)
+  ["write_offset"]=>
+  int(9)
 }
 string(9) "Some Data"
 string(9) "Some Data"

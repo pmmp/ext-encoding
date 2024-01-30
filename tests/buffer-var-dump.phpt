@@ -14,9 +14,11 @@ $buffer->writeByteArray(" short"); //this will result in a buffer larger than th
 var_dump($buffer);
 ?>
 --EXPECTF--
-object(pmmp\encoding\ByteBuffer)#%d (2) {
+object(pmmp\encoding\ByteBuffer)#%d (3) {
   ["buffer"]=>
   string(22) "looooooooooooong short"
-  ["offset"]=>
+  ["read_offset"]=>
+  int(0)
+  ["write_offset"]=>
   int(22)
 }

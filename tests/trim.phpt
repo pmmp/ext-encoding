@@ -8,13 +8,13 @@ use pmmp\encoding\ByteBuffer;
 $buffer = new ByteBuffer("");
 $buffer->reserve(100);
 $buffer->writeByteArray("aaaaa");
-var_dump($buffer->getReserved());
+var_dump($buffer->getReservedLength());
 $buffer->trim();
-var_dump($buffer->getReserved());
+var_dump($buffer->getReservedLength());
 
 $buffer = new ByteBuffer("aaaaaaaaaa");
 $buffer->trim();
-var_dump($buffer->getReserved());
+var_dump($buffer->getReservedLength());
 ?>
 --EXPECT--
 int(100)

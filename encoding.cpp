@@ -384,7 +384,12 @@ static int byte_buffer_compare_objects(zval* obj1, zval* obj2) {
 			auto object1 = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(obj1));
 			auto object2 = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(obj2));
 
-			if (object1->offset == object2->offset && object1->used == object2->used && zend_string_equals(object1->buffer, object2->buffer)) {
+			if (
+				object1->read_offset == object2->read_offset &&
+				object1->write_offset == object2->write_offset &&
+				object1->used == object2->used &&
+				zend_string_equals(object1->buffer, object2->buffer)
+			) {
 				return 0;
 			}
 		}

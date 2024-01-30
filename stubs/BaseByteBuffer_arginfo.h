@@ -94,7 +94,7 @@ static zend_class_entry *register_class_pmmp_encoding_BaseByteBuffer(void)
 
 	INIT_NS_CLASS_ENTRY(ce, "pmmp\\encoding", "BaseByteBuffer", class_pmmp_encoding_BaseByteBuffer_methods);
 	class_entry = zend_register_internal_class_ex(&ce, NULL);
-	class_entry->ce_flags |= ZEND_ACC_ABSTRACT;
+	class_entry->ce_flags |= ZEND_ACC_ABSTRACT|ZEND_ACC_NO_DYNAMIC_PROPERTIES;
 
 	return class_entry;
 }

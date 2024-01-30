@@ -544,16 +544,6 @@ BYTE_BUFFER_METHOD(trim) {
 	}
 }
 
-BYTE_BUFFER_METHOD(rewind) {
-	zend_parse_parameters_none_throw();
-
-	auto object = BYTE_BUFFER_THIS();
-
-	//TODO: doubtful that rewinding both offsets at the same time is desirable
-	object->read_offset = 0;
-	object->write_offset = 0;
-}
-
 BYTE_BUFFER_METHOD(__serialize) {
 	zend_parse_parameters_none_throw();
 

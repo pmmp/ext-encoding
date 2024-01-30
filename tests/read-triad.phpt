@@ -11,13 +11,13 @@ $buffer = new ByteBuffer("\xff\x00\x00");
 
 var_dump($buffer->readSignedTriadBE());
 
-$buffer->rewind();
+$buffer->setReadOffset(0);
 var_dump($buffer->readSignedTriadLE());
 
-$buffer->rewind();
+$buffer->setReadOffset(0);
 var_dump($buffer->readUnsignedTriadBE());
 
-$buffer->rewind();
+$buffer->setReadOffset(0);
 var_dump($buffer->readUnsignedTriadLE());
 
 ?>

@@ -95,11 +95,6 @@ abstract class BaseByteBuffer{
 	 */
 	public function trim() : void{}
 
-	/**
-	 * Sets the internal offset to the start of the buffer.
-	 */
-	public function rewind() : void{}
-
 	public function __serialize() : array{}
 
 	public function __unserialize(array $data) : void{}

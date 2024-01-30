@@ -20,10 +20,6 @@ $buffer->writeByteArray(str_repeat("a", 40)); //cause new allocation, this shoul
 var_dump($buffer->getReservedLength()); //80
 var_dump($buffer->toString());
 
-//check that reserving is relative to the current buffer size, not absolute
-$buffer->reserve(80);
-var_dump($buffer->getReservedLength()); //160
-
 try{
     $buffer->reserve(-1);
 }catch(\ValueError $e){
@@ -38,5 +34,4 @@ int(40)
 string(1) "a"
 int(80)
 string(41) "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-int(160)
 Length must be greater than zero

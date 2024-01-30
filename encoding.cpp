@@ -493,7 +493,14 @@ BYTE_BUFFER_METHOD(setOffset) {
 	object->offset = static_cast<size_t>(offset);
 }
 
-BYTE_BUFFER_METHOD(getReserved) {
+BYTE_BUFFER_METHOD(getUsedLength) {
+	zend_parse_parameters_none_throw();
+
+	auto object = BYTE_BUFFER_THIS();
+	RETURN_LONG(object->used);
+}
+
+BYTE_BUFFER_METHOD(getReservedLength) {
 	zend_parse_parameters_none_throw();
 
 	auto object = BYTE_BUFFER_THIS();
@@ -529,14 +536,6 @@ BYTE_BUFFER_METHOD(rewind) {
 
 	auto object = BYTE_BUFFER_THIS();
 	object->offset = 0;
-}
-
-BYTE_BUFFER_METHOD(getUnreadLength) {
-	zend_parse_parameters_none_throw();
-
-	auto object = BYTE_BUFFER_THIS();
-
-	RETURN_LONG(object->used - object->offset);
 }
 
 BYTE_BUFFER_METHOD(__serialize) {

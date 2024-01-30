@@ -8,6 +8,12 @@ namespace pmmp\encoding;
  * @strict-properties
  */
 abstract class BaseByteBuffer{
+	/**
+	 * Constructs a new ByteBuffer.
+	 * The offset will be initialized to 0.
+	 * If you want to use the buffer for writing, you'll want to do
+	 * setOffset(strlen($buffer)) before writing anything.
+	 */
 	public function __construct(string $buffer = ""){}
 
 	/**
@@ -41,16 +47,25 @@ abstract class BaseByteBuffer{
 
 	/**
 	 * Sets the internal offset to the given value.
-	 * The offset must be within the intialized part of the buffer.
+	 * The offset must be within the bounds of the buffer
+	 * (0 <= offset <= used length).
+	 *
+	 * @throws \ValueError if the offset is out of bounds
 	 */
 	public function setOffset(int $offset) : void{}
+
+	/**
+	 * Returns the total number of bytes written or available to read.
+	 * This will always be less than or equal to the reserved length.
+	 */
+	public function getUsedLength() : int{}
 
 	/**
 	 * Returns the number of bytes reserved by the ByteBuffer.
 	 * This value may be larger than the number of readable bytes, as
 	 * some memory may be preallocated to avoid reallocations.
 	 */
-	public function getReserved() : int{}
+	public function getReservedLength() : int{}
 
 	/**
 	 * Increases buffer capacity to the given value, if the capacity
@@ -70,12 +85,6 @@ abstract class BaseByteBuffer{
 	 * Sets the internal offset to the start of the buffer.
 	 */
 	public function rewind() : void{}
-
-	/**
-	 * Returns the number of bytes available to read after the
-	 * current offset.
-	 */
-	public function getUnreadLength() : int{}
 
 	public function __serialize() : array{}
 

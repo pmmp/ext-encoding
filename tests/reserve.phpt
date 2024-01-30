@@ -6,18 +6,18 @@ Test that reserving works correctly
 use pmmp\encoding\ByteBuffer;
 
 $buffer = new ByteBuffer("");
-var_dump($buffer->getReserved()); //none
+var_dump($buffer->getReservedLength()); //none
 
 $buffer->reserve(40);
-var_dump($buffer->getReserved()); //40
+var_dump($buffer->getReservedLength()); //40
 var_dump($buffer->toString()); //still empty, we haven't used any space
 
 $buffer->writeSignedByte(ord("a"));
-var_dump($buffer->getReserved()); //40
+var_dump($buffer->getReservedLength()); //40
 var_dump($buffer->toString());
 
 $buffer->writeByteArray(str_repeat("a", 40)); //cause new allocation, this should double the buffer size to 80
-var_dump($buffer->getReserved()); //80
+var_dump($buffer->getReservedLength()); //80
 var_dump($buffer->toString());
 
 try{

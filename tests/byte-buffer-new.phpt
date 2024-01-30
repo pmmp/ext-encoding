@@ -12,7 +12,7 @@ $buffer = new ByteBuffer();
 var_dump($buffer->toString());
 
 $buffer = new ByteBuffer("hello world");
-$buffer->setOffset(6);
+$buffer->setReadOffset(6);
 var_dump($buffer->readByteArray(5));
 ?>
 --EXPECT--

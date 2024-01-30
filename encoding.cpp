@@ -49,7 +49,8 @@ static zend_object_handlers byte_buffer_zend_object_handlers;
 
 typedef struct _byte_buffer_zend_object {
 	zend_string* buffer;
-	size_t offset;
+	size_t read_offset;
+	size_t write_offset;
 	size_t used;
 	zend_object std;
 } byte_buffer_zend_object;
@@ -82,7 +83,7 @@ void ZEND_FASTCALL zif_readType(INTERNAL_FUNCTION_PARAMETERS) {
 
 	TValue result;
 	auto bytes = reinterpret_cast<unsigned char*>(ZSTR_VAL(object->buffer));
-	if (readTypeFunc(bytes, object->used, object->offset, result)) {
+	if (readTypeFunc(bytes, object->used, object->read_offset, result)) {
 		assignResult(return_value, result);
 	}
 }
@@ -243,9 +244,9 @@ void ZEND_FASTCALL zif_writeType(INTERNAL_FUNCTION_PARAMETERS) {
 		return;
 	}
 
-	writeTypeFunc(object->buffer, object->offset, value);
-	if (object->offset > object->used) {
-		object->used = object->offset;
+	writeTypeFunc(object->buffer, object->write_offset, value);
+	if (object->write_offset > object->used) {
+		object->used = object->write_offset;
 	}
 }
 
@@ -344,17 +345,18 @@ static inline void writeSignedVarInt(zend_string*& buffer, size_t& offset, TSign
 	writeUnsignedVarInt<TUnsignedType>(buffer, offset, (static_cast<TUnsignedType>(value) << 1) ^ mask);
 }
 
-static void byte_buffer_init_properties(byte_buffer_zend_object* object, zend_string* buffer, size_t offset, size_t used) {
+static void byte_buffer_init_properties(byte_buffer_zend_object* object, zend_string* buffer, size_t used, size_t read_offset, size_t write_offset) {
 	object->buffer = buffer;
 	zend_string_addref(buffer);
-	object->offset = offset;
+	object->read_offset = read_offset;
+	object->write_offset = write_offset;
 	object->used = used;
 }
 
 static zend_object* byte_buffer_new(zend_class_entry* ce) {
 	auto object = alloc_custom_zend_object<byte_buffer_zend_object>(ce, &byte_buffer_zend_object_handlers);
 
-	byte_buffer_init_properties(object, zend_empty_string, 0, 0);
+	byte_buffer_init_properties(object, zend_empty_string, 0, 0, 0);
 
 	return &object->std;
 }
@@ -365,7 +367,7 @@ static zend_object* byte_buffer_clone(zend_object* object) {
 
 	zend_objects_clone_members(&new_object->std, &old_object->std);
 
-	byte_buffer_init_properties(new_object, old_object->buffer, old_object->offset, old_object->used);
+	byte_buffer_init_properties(new_object, old_object->buffer, old_object->used, old_object->read_offset, old_object->write_offset);
 
 	return &new_object->std;
 }
@@ -410,7 +412,8 @@ BYTE_BUFFER_METHOD(__construct) {
 	if (buffer == NULL) {
 		buffer = zend_empty_string;
 	}
-	byte_buffer_init_properties(object, buffer, 0, ZSTR_LEN(buffer));
+	//read offset is placed at the start, and write offset at the end (to mirror PM BinaryStream behaviour)
+	byte_buffer_init_properties(object, buffer, ZSTR_LEN(buffer), 0, ZSTR_LEN(buffer));
 }
 
 BYTE_BUFFER_METHOD(toString) {
@@ -440,13 +443,13 @@ BYTE_BUFFER_METHOD(readByteArray) {
 
 	object = BYTE_BUFFER_THIS();
 
-	if (object->used - object->offset < length) {
-		zend_throw_exception_ex(data_decode_exception_ce, 0, "Need at least %zu bytes, but only have %zu bytes", length, object->used - object->offset);
+	if (object->used - object->read_offset < length) {
+		zend_throw_exception_ex(data_decode_exception_ce, 0, "Need at least %zu bytes, but only have %zu bytes", length, object->used - object->read_offset);
 		return;
 	}
 
-	RETVAL_STRINGL(ZSTR_VAL(object->buffer) + object->offset, length);
-	object->offset += length;
+	RETVAL_STRINGL(ZSTR_VAL(object->buffer) + object->read_offset, length);
+	object->read_offset += length;
 }
 
 BYTE_BUFFER_METHOD(writeByteArray) {
@@ -462,36 +465,41 @@ BYTE_BUFFER_METHOD(writeByteArray) {
 
 	auto size = ZSTR_LEN(value);
 
-	extendBuffer(object->buffer, object->offset, size);
-	memcpy(ZSTR_VAL(object->buffer) + object->offset, ZSTR_VAL(value), size);
-	object->offset += size;
-	if (object->offset > object->used) {
-		object->used = object->offset;
+	extendBuffer(object->buffer, object->write_offset, size);
+	memcpy(ZSTR_VAL(object->buffer) + object->write_offset, ZSTR_VAL(value), size);
+	object->write_offset += size;
+	if (object->write_offset > object->used) {
+		object->used = object->write_offset;
 	}
 }
 
-BYTE_BUFFER_METHOD(getOffset) {
-	zend_parse_parameters_none_throw();
-
-	auto object = BYTE_BUFFER_THIS();
-	RETURN_LONG(object->offset);
+#define GET_OFFSET(func_name, which_offset) BYTE_BUFFER_METHOD(func_name) { \
+	zend_parse_parameters_none_throw(); \
+	auto object = BYTE_BUFFER_THIS(); \
+	RETURN_LONG(object->which_offset); \
 }
 
-BYTE_BUFFER_METHOD(setOffset) {
-	zend_long offset;
-
-	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
-		Z_PARAM_LONG(offset)
-	ZEND_PARSE_PARAMETERS_END();
-
-	auto object = BYTE_BUFFER_THIS();
-	if (offset < 0 || static_cast<size_t>(offset) > object->used) {
-		zend_value_error("Offset must not be less than zero or greater than the buffer size");
-		return;
-	}
-
-	object->offset = static_cast<size_t>(offset);
+#define SET_OFFSET(func_name, which_offset) BYTE_BUFFER_METHOD(func_name) { \
+	zend_long offset; \
+\
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1) \
+		Z_PARAM_LONG(offset) \
+	ZEND_PARSE_PARAMETERS_END(); \
+\
+	auto object = BYTE_BUFFER_THIS(); \
+	if (offset < 0 || static_cast<size_t>(offset) > object->used) { \
+		zend_value_error("Offset must not be less than zero or greater than the buffer size"); \
+		return; \
+	} \
+\
+	object->which_offset = static_cast<size_t>(offset); \
 }
+
+GET_OFFSET(getReadOffset, read_offset);
+GET_OFFSET(getWriteOffset, write_offset);
+
+SET_OFFSET(setReadOffset, read_offset);
+SET_OFFSET(setWriteOffset, write_offset);
 
 BYTE_BUFFER_METHOD(getUsedLength) {
 	zend_parse_parameters_none_throw();
@@ -535,7 +543,10 @@ BYTE_BUFFER_METHOD(rewind) {
 	zend_parse_parameters_none_throw();
 
 	auto object = BYTE_BUFFER_THIS();
-	object->offset = 0;
+
+	//TODO: doubtful that rewinding both offsets at the same time is desirable
+	object->read_offset = 0;
+	object->write_offset = 0;
 }
 
 BYTE_BUFFER_METHOD(__serialize) {
@@ -544,7 +555,22 @@ BYTE_BUFFER_METHOD(__serialize) {
 	auto object = BYTE_BUFFER_THIS();
 	array_init(return_value);
 	add_assoc_stringl(return_value, "buffer", ZSTR_VAL(object->buffer), object->used);
-	add_assoc_long(return_value, "offset", object->offset);
+	add_assoc_long(return_value, "read_offset", object->read_offset);
+	add_assoc_long(return_value, "write_offset", object->write_offset);
+}
+
+static zval* fetch_serialized_property(HashTable* data, const char* name, int type) {
+	zval* zv = zend_hash_str_find(data, ZEND_STRL(name));
+	if (zv == NULL) {
+		zend_throw_exception_ex(NULL, 0, "Serialized data is missing \"%s\"", name);
+		return NULL;
+	}
+	if (Z_TYPE_P(zv) != type) {
+		zend_throw_exception_ex(NULL, 0, "\"%s\" in serialized data should be of type %s, but have %s", name, zend_zval_type_name(zv), zend_get_type_by_const(type));
+		return NULL;
+	}
+
+	return zv;
 }
 
 BYTE_BUFFER_METHOD(__unserialize) {
@@ -554,20 +580,22 @@ BYTE_BUFFER_METHOD(__unserialize) {
 		Z_PARAM_ARRAY_HT(data)
 	ZEND_PARSE_PARAMETERS_END();
 
-	zval* buffer = zend_hash_str_find(data, ZEND_STRL("buffer"));
-	if (buffer == NULL || Z_TYPE_P(buffer) != IS_STRING) {
-		zend_throw_exception(NULL, "Buffer type in serialized data is not a string", 0);
+	zval* buffer = fetch_serialized_property(data, "buffer", IS_STRING);
+	if (buffer == NULL) {
 		return;
 	}
-	zval* offset = zend_hash_str_find(data, ZEND_STRL("offset"));
-	if (offset == NULL || Z_TYPE_P(offset) != IS_LONG) {
-		zend_throw_exception(NULL, "Offset type in serialized data is not an int", 0);
+	zval* read_offset = fetch_serialized_property(data, "read_offset", IS_LONG);
+	if (read_offset == NULL) {
+		return;
+	}
+	zval* write_offset = fetch_serialized_property(data, "write_offset", IS_LONG);
+	if (write_offset == NULL) {
 		return;
 	}
 
 	auto object = BYTE_BUFFER_THIS();
 
-	byte_buffer_init_properties(object, Z_STR_P(buffer), static_cast<size_t>(Z_LVAL_P(offset)), Z_STRLEN_P(buffer));
+	byte_buffer_init_properties(object, Z_STR_P(buffer), Z_STRLEN_P(buffer), Z_LVAL_P(read_offset), Z_LVAL_P(write_offset));
 }
 
 BYTE_BUFFER_METHOD(__debugInfo) {
@@ -576,7 +604,8 @@ BYTE_BUFFER_METHOD(__debugInfo) {
 	auto object = BYTE_BUFFER_THIS();
 	array_init(return_value);
 	add_assoc_stringl(return_value, "buffer", ZSTR_VAL(object->buffer), object->used);
-	add_assoc_long(return_value, "offset", object->offset);
+	add_assoc_long(return_value, "read_offset", object->read_offset);
+	add_assoc_long(return_value, "write_offset", object->write_offset);
 }
 
 /* {{{ PHP_MINFO_FUNCTION */

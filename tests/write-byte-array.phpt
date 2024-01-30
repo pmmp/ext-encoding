@@ -8,17 +8,17 @@ use pmmp\encoding\ByteBuffer;
 $buffer = new ByteBuffer("");
 $buffer->writeByteArray("12345");
 
-var_dump($buffer->getOffset());
+var_dump($buffer->getWriteOffset());
 var_dump($buffer->toString());
 
 $buffer->writeByteArray("67");
 
-var_dump($buffer->getOffset());
+var_dump($buffer->getWriteOffset());
 var_dump($buffer->toString());
 
-$buffer->setOffset(2);
+$buffer->setWriteOffset(2);
 $buffer->writeByteArray("890");
-var_dump($buffer->getOffset());
+var_dump($buffer->getWriteOffset());
 var_dump($buffer->toString());
 ?>
 --EXPECT--

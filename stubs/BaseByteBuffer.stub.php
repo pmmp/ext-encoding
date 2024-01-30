@@ -10,9 +10,8 @@ namespace pmmp\encoding;
 abstract class BaseByteBuffer{
 	/**
 	 * Constructs a new ByteBuffer.
-	 * The offset will be initialized to 0.
-	 * If you want to use the buffer for writing, you'll want to do
-	 * setOffset(strlen($buffer)) before writing anything.
+	 * The read offset will be initialized to 0.
+	 * The write offset will be initialized to the length of the given buffer.
 	 */
 	public function __construct(string $buffer = ""){}
 
@@ -40,19 +39,34 @@ abstract class BaseByteBuffer{
 	public function writeByteArray(string $value) : void{}
 
 	/**
-	 * Returns the current internal offset (the position from
-	 * which the next read/write operation will start).
+	 * Returns the current internal read offset (the position
+	 * from which the next read operation will start).
 	 */
-	public function getOffset() : int{}
+	public function getReadOffset() : int{}
 
 	/**
-	 * Sets the internal offset to the given value.
+	 * Returns the current internal write offset (the position
+	 * from which the next write operation will start).
+	 */
+	public function getWriteOffset() : int{}
+
+	/**
+	 * Sets the internal read offset to the given value.
 	 * The offset must be within the bounds of the buffer
 	 * (0 <= offset <= used length).
 	 *
 	 * @throws \ValueError if the offset is out of bounds
 	 */
-	public function setOffset(int $offset) : void{}
+	public function setReadOffset(int $offset) : void{}
+
+	/**
+	 * Sets the internal write offset to the given value.
+	 * The offset must be within the bounds of the buffer
+	 * (0 <= offset <= reserved length).
+	 *
+	 * @throws \ValueError if the offset is out of bounds
+	 */
+	public function setWriteOffset(int $offset) : void{}
 
 	/**
 	 * Returns the total number of bytes written or available to read.

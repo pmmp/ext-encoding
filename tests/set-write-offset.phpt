@@ -1,33 +1,33 @@
 --TEST--
-Test that ByteBuffer::setOffset() works as expected
+Test that ByteBuffer::setWriteOffset() works as expected
 --FILE--
 <?php
 
 use pmmp\encoding\ByteBuffer;
 
 $buffer = new ByteBuffer("");
-$buffer->setOffset(0);
+$buffer->setWriteOffset(0);
 
 $buffer->writeByteArray("aaaa");
 //setting offset at the end of the buffer is allowed and results in buffer extension on the next write
-$buffer->setOffset(4);
+$buffer->setWriteOffset(4);
 $buffer->writeByteArray("bbbb");
 
 var_dump($buffer->toString());
 
-$buffer->setOffset(6);
+$buffer->setWriteOffset(6);
 $buffer->writeByteArray("cccc");
 
 var_dump($buffer->toString());
 
 try{
-	$buffer->setOffset(-1);
+	$buffer->setWriteOffset(-1);
 }catch(\ValueError $e){
     echo $e->getMessage() . PHP_EOL;
 }
 
 try{
-    $buffer->setOffset(11);
+    $buffer->setWriteOffset(11);
 }catch(\ValueError $e){
     echo $e->getMessage() . PHP_EOL;
 }

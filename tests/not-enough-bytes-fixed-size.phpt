@@ -21,7 +21,7 @@ foreach($functions as $function => $buf){
 
 	try{
 		$buffer = new ByteBuffer($test);
-		$buffer->setOffset(15);
+		$buffer->setReadOffset(15);
 		$buffer->$function();
 	}catch(DataDecodeException $e){
 		echo "$function with offset: " . $e->getMessage() . "\n";

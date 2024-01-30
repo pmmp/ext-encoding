@@ -32,12 +32,12 @@ try{
 }
 
 //ensure offset is updated properly
-$buffer->setOffset(1);
+$buffer->setReadOffset(1);
 var_dump($buffer->readByteArray(2));
-var_dump($buffer->getOffset());
+var_dump($buffer->getReadOffset());
 
 //read with bytes, but all before the buffer start
-$buffer->setOffset(5);
+$buffer->setReadOffset(5);
 try{
     $buffer->readByteArray(2);
 }catch(DataDecodeException $e){

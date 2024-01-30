@@ -18,7 +18,7 @@ function test(string $function) : void{
 
 	$buffer = new ByteBuffer("\x00\x00\x00\x00\x80");
 	try{
-		$buffer->setOffset(4);
+		$buffer->setReadOffset(4);
 		$buffer->$function();
 	}catch(DataDecodeException $e){
 		echo "offset valid, not enough bytes: " . $e->getMessage() . "\n";

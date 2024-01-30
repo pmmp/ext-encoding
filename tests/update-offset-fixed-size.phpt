@@ -12,10 +12,10 @@ function test(string $function, int $size) : void{
 
 	$bytes = str_repeat("\x00", $size * 3);
 	$buffer = new ByteBuffer($bytes);
-	$buffer->setOffset($originalOffset);
+	$buffer->setReadOffset($originalOffset);
 
 	$buffer->$function();
-	var_dump($buffer->getOffset() === $originalOffset + $size);
+	var_dump($buffer->getReadOffset() === $originalOffset + $size);
 }
 
 $functions = require __DIR__ . '/fixed-size-types.inc';

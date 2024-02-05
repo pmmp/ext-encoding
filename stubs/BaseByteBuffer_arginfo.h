@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: 7cd1dd363517d6bc01b82e50e5dc8e16c3ac569b */
+ * Stub hash: e4cd03e67587e5cd47862bdb22a4f9ef22e24367 */
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_class_pmmp_encoding_BaseByteBuffer___construct, 0, 0, 0)
 	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, buffer, IS_STRING, 0, "\"\"")
@@ -38,6 +38,8 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_pmmp_encoding_BaseByteBuffer_trim, 0, 0, IS_VOID, 0)
 ZEND_END_ARG_INFO()
 
+#define arginfo_class_pmmp_encoding_BaseByteBuffer_clear arginfo_class_pmmp_encoding_BaseByteBuffer_trim
+
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_pmmp_encoding_BaseByteBuffer___serialize, 0, 0, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
@@ -60,6 +62,7 @@ ZEND_METHOD(pmmp_encoding_BaseByteBuffer, getUsedLength);
 ZEND_METHOD(pmmp_encoding_BaseByteBuffer, getReservedLength);
 ZEND_METHOD(pmmp_encoding_BaseByteBuffer, reserve);
 ZEND_METHOD(pmmp_encoding_BaseByteBuffer, trim);
+ZEND_METHOD(pmmp_encoding_BaseByteBuffer, clear);
 ZEND_METHOD(pmmp_encoding_BaseByteBuffer, __serialize);
 ZEND_METHOD(pmmp_encoding_BaseByteBuffer, __unserialize);
 ZEND_METHOD(pmmp_encoding_BaseByteBuffer, __debugInfo);
@@ -78,6 +81,7 @@ static const zend_function_entry class_pmmp_encoding_BaseByteBuffer_methods[] = 
 	ZEND_ME(pmmp_encoding_BaseByteBuffer, getReservedLength, arginfo_class_pmmp_encoding_BaseByteBuffer_getReservedLength, ZEND_ACC_PUBLIC)
 	ZEND_ME(pmmp_encoding_BaseByteBuffer, reserve, arginfo_class_pmmp_encoding_BaseByteBuffer_reserve, ZEND_ACC_PUBLIC)
 	ZEND_ME(pmmp_encoding_BaseByteBuffer, trim, arginfo_class_pmmp_encoding_BaseByteBuffer_trim, ZEND_ACC_PUBLIC)
+	ZEND_ME(pmmp_encoding_BaseByteBuffer, clear, arginfo_class_pmmp_encoding_BaseByteBuffer_clear, ZEND_ACC_PUBLIC)
 	ZEND_ME(pmmp_encoding_BaseByteBuffer, __serialize, arginfo_class_pmmp_encoding_BaseByteBuffer___serialize, ZEND_ACC_PUBLIC)
 	ZEND_ME(pmmp_encoding_BaseByteBuffer, __unserialize, arginfo_class_pmmp_encoding_BaseByteBuffer___unserialize, ZEND_ACC_PUBLIC)
 	ZEND_ME(pmmp_encoding_BaseByteBuffer, __debugInfo, arginfo_class_pmmp_encoding_BaseByteBuffer___debugInfo, ZEND_ACC_PUBLIC)

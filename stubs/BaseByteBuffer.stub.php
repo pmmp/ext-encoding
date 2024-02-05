@@ -95,6 +95,12 @@ abstract class BaseByteBuffer{
 	 */
 	public function trim() : void{}
 
+	/**
+	 * Clears all data from the buffer. The memory used is retained
+	 * as reserved memory.
+	 */
+	public function clear() : void{}
+
 	public function __serialize() : array{}
 
 	public function __unserialize(array $data) : void{}

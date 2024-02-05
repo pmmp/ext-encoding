@@ -544,6 +544,15 @@ BYTE_BUFFER_METHOD(trim) {
 	}
 }
 
+BYTE_BUFFER_METHOD(clear) {
+	zend_parse_parameters_none_throw();
+
+	auto object = BYTE_BUFFER_THIS();
+	object->read_offset = 0;
+	object->write_offset = 0;
+	object->used = 0;
+}
+
 BYTE_BUFFER_METHOD(__serialize) {
 	zend_parse_parameters_none_throw();
 

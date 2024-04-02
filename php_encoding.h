@@ -6,7 +6,7 @@
 extern zend_module_entry encoding_module_entry;
 # define phpext_encoding_ptr &encoding_module_entry
 
-# define PHP_ENCODING_VERSION "0.2.4-dev"
+# define PHP_ENCODING_VERSION "0.3.0"
 
 # if defined(ZTS) && defined(COMPILE_DL_ENCODING)
 ZEND_TSRMLS_CACHE_EXTERN()

@@ -7,6 +7,7 @@ extern "C" {
 }
 #include "classes/DataDecodeException.h"
 #include <algorithm>
+#include <iterator>
 #include <type_traits>
 
 enum class ByteOrder {

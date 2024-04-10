@@ -6,10 +6,11 @@ ByteBuffer may allocate more bytes than it needs in order to minimize allocation
 <?php
 
 use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\Types;
 
 $buffer = new ByteBuffer("");
-$buffer->writeSignedIntBE(0); //first buffer alloc, 4 bytes
-$buffer->writeSignedByte(0); //second buffer alloc, 8 bytes (used 5)
+Types::writeSignedIntBE($buffer, 0); //first buffer alloc, 4 bytes
+Types::writeSignedByte($buffer, 0); //second buffer alloc, 8 bytes (used 5)
 
 var_dump(bin2hex($buffer->toString()));
 

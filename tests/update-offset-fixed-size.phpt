@@ -7,20 +7,20 @@ encoding
 
 use pmmp\encoding\ByteBuffer;
 
-function test(string $function, int $size) : void{
+function test(\Closure $function, int $size) : void{
 	$originalOffset = $size;
 
 	$bytes = str_repeat("\x00", $size * 3);
 	$buffer = new ByteBuffer($bytes);
 	$buffer->setReadOffset($originalOffset);
 
-	$buffer->$function();
+	$function($buffer);
 	var_dump($buffer->getReadOffset() === $originalOffset + $size);
 }
 
 $functions = require __DIR__ . '/fixed-size-types.inc';
 
-foreach($functions as $function => $buf){
+foreach($functions as [$function, $buf]){
 	test($function, strlen($buf));
 }
 

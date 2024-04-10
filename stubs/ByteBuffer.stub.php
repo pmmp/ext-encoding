@@ -7,7 +7,7 @@ namespace pmmp\encoding;
 /**
  * @strict-properties
  */
-abstract class BaseByteBuffer{
+final class ByteBuffer{
 	/**
 	 * Constructs a new ByteBuffer.
 	 * The read offset will be initialized to 0.

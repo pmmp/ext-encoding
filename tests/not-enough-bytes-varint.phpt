@@ -7,11 +7,12 @@ encoding
 
 use pmmp\encoding\ByteBuffer;
 use pmmp\encoding\DataDecodeException;
+use pmmp\encoding\Types;
 
-function test(string $function) : void{
+function test(\Closure $function) : void{
 	$buffer = new ByteBuffer("\x80");
 	try{
-		$buffer->$function();
+		$function($buffer);
 	}catch(DataDecodeException $e){
 		echo "no offset, not enough bytes: " . $e->getMessage() . "\n";
 	}
@@ -19,7 +20,7 @@ function test(string $function) : void{
 	$buffer = new ByteBuffer("\x00\x00\x00\x00\x80");
 	try{
 		$buffer->setReadOffset(4);
-		$buffer->$function();
+		$function($buffer);
 	}catch(DataDecodeException $e){
 		echo "offset valid, not enough bytes: " . $e->getMessage() . "\n";
 	}
@@ -27,10 +28,10 @@ function test(string $function) : void{
 	echo "\n";
 }
 
-test('readUnsignedVarInt');
-test('readSignedVarInt');
-test('readUnsignedVarLong');
-test('readSignedVarLong');
+test(Types::readUnsignedVarInt(...));
+test(Types::readSignedVarInt(...));
+test(Types::readUnsignedVarLong(...));
+test(Types::readSignedVarLong(...));
 
 ?>
 --EXPECT--

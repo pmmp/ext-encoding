@@ -6,21 +6,22 @@ Triads require special implementation due to not being a power-of-two size. This
 <?php
 
 use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\Types;
 
 $buffer = new ByteBuffer();
-$buffer->writeSignedTriadBE(-65536);
+Types::writeSignedTriadBE($buffer, -65536);
 var_dump($buffer->toString() === "\xff\x00\x00");
 
 $buffer = new ByteBuffer();
-$buffer->writeSignedTriadLE(-65536);
+Types::writeSignedTriadLE($buffer, -65536);
 var_dump($buffer->toString() === "\x00\x00\xff");
 
 $buffer = new ByteBuffer();
-$buffer->writeUnsignedTriadBE(-65536);
+Types::writeUnsignedTriadBE($buffer, -65536);
 var_dump($buffer->toString() === "\xff\x00\x00");
 
 $buffer = new ByteBuffer();
-$buffer->writeUnsignedTriadLE(-65536);
+Types::writeUnsignedTriadLE($buffer, -65536);
 var_dump($buffer->toString() === "\x00\x00\xff");
 
 ?>

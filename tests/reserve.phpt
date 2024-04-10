@@ -4,6 +4,7 @@ Test that reserving works correctly
 <?php
 
 use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\Types;
 
 $buffer = new ByteBuffer("");
 var_dump($buffer->getReservedLength()); //none
@@ -12,7 +13,7 @@ $buffer->reserve(40);
 var_dump($buffer->getReservedLength()); //40
 var_dump($buffer->toString()); //still empty, we haven't used any space
 
-$buffer->writeSignedByte(ord("a"));
+Types::writeSignedByte($buffer, ord("a"));
 var_dump($buffer->getReservedLength()); //40
 var_dump($buffer->toString());
 

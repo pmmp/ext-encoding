@@ -12,6 +12,7 @@ extern "C" {
 #include "stubs/DataDecodeException_arginfo.h"
 }
 #include "classes/ByteBuffer.h"
+#include "classes/Types.h"
 #include "classes/DataDecodeException.h"
 
 /* {{{ PHP_MINFO_FUNCTION */
@@ -41,6 +42,7 @@ zend_class_entry* data_decode_exception_ce;
 PHP_MINIT_FUNCTION(encoding) {
 	data_decode_exception_ce = register_class_pmmp_encoding_DataDecodeException(spl_ce_RuntimeException);
 	init_class_ByteBuffer();
+	init_class_Types();
 
 	return SUCCESS;
 }

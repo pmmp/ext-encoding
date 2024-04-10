@@ -11,20 +11,20 @@ use pmmp\encoding\DataDecodeException;
 $functions = require __DIR__ . '/fixed-size-types.inc';
 
 $test = str_repeat("\x00", 16);
-foreach($functions as $function => $buf){
+foreach($functions as [$function, $buf]){
 	try{
 		$buffer = new ByteBuffer("\x00");
-		$buffer->$function();
+        $function($buffer);
 	}catch(DataDecodeException $e){
-		echo "$function no offset: " . $e->getMessage() . "\n";
+		echo (new \ReflectionFunction($function))->getShortName() . " no offset: " . $e->getMessage() . "\n";
 	}
 
 	try{
 		$buffer = new ByteBuffer($test);
 		$buffer->setReadOffset(15);
-		$buffer->$function();
+        $function($buffer);
 	}catch(DataDecodeException $e){
-		echo "$function with offset: " . $e->getMessage() . "\n";
+		echo (new \ReflectionFunction($function))->getShortName() . " with offset: " . $e->getMessage() . "\n";
 	}
 
 	echo "\n";

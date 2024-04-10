@@ -1,173 +1,289 @@
 extern "C" {
 #include "php.h"
+#include "Zend/zend_exceptions.h"
+#include "../stubs/ByteBuffer_arginfo.h"
 }
-#include "BaseByteBuffer.h"
+
+#include "ByteBuffer.h"
 #include "DataDecodeException.h"
 #include "../Serializers.h"
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_read_integer, 0, 0, IS_LONG, 0)
-ZEND_END_ARG_INFO()
+static zend_object_handlers byte_buffer_zend_object_handlers;
+zend_class_entry* byte_buffer_ce;
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_write_integer, 0, 1, IS_VOID, 0)
-ZEND_ARG_TYPE_INFO(0, value, IS_LONG, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_read_float, 0, 0, IS_DOUBLE, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_write_float, 0, 1, IS_VOID, 0)
-ZEND_ARG_TYPE_INFO(0, value, IS_DOUBLE, 0)
-ZEND_END_ARG_INFO()
-
-template<typename TValue>
-static inline void zval_long_wrapper(zval* zv, TValue value) {
-	ZVAL_LONG(zv, value);
+static void byte_buffer_init_properties(byte_buffer_zend_object* object, zend_string* buffer, size_t used, size_t read_offset, size_t write_offset) {
+	object->buffer = buffer;
+	zend_string_addref(buffer);
+	object->read_offset = read_offset;
+	object->write_offset = write_offset;
+	object->used = used;
 }
 
-template<typename TValue>
-static inline void zval_double_wrapper(zval* zv, TValue value) {
-	ZVAL_DOUBLE(zv, value);
+static zend_object* byte_buffer_new(zend_class_entry* ce) {
+	auto object = alloc_custom_zend_object<byte_buffer_zend_object>(ce, &byte_buffer_zend_object_handlers);
+
+	byte_buffer_init_properties(object, zend_empty_string, 0, 0, 0);
+
+	return &object->std;
 }
 
-template<typename TValue, bool (*readTypeFunc)(unsigned char* bytes, size_t used, size_t& offset, TValue& result), void(*assignResult)(zval*, TValue)>
-void ZEND_FASTCALL zif_readType(INTERNAL_FUNCTION_PARAMETERS) {
+static zend_object* byte_buffer_clone(zend_object* object) {
+	auto old_object = fetch_from_zend_object<byte_buffer_zend_object>(object);
+	auto new_object = fetch_from_zend_object<byte_buffer_zend_object>(byte_buffer_new(object->ce));
+
+	zend_objects_clone_members(&new_object->std, &old_object->std);
+
+	byte_buffer_init_properties(new_object, old_object->buffer, old_object->used, old_object->read_offset, old_object->write_offset);
+
+	return &new_object->std;
+}
+
+static void byte_buffer_free(zend_object* std) {
+	auto object = fetch_from_zend_object<byte_buffer_zend_object>(std);
+
+	zend_string_release_ex(object->buffer, 0);
+}
+
+static int byte_buffer_compare_objects(zval* obj1, zval* obj2) {
+	if (Z_TYPE_P(obj1) == IS_OBJECT && Z_TYPE_P(obj2) == IS_OBJECT) {
+		if (instanceof_function(Z_OBJCE_P(obj1), byte_buffer_ce) && instanceof_function(Z_OBJCE_P(obj2), byte_buffer_ce)) {
+			auto object1 = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(obj1));
+			auto object2 = fetch_from_zend_object<byte_buffer_zend_object>(Z_OBJ_P(obj2));
+
+			if (
+				object1->read_offset == object2->read_offset &&
+				object1->write_offset == object2->write_offset &&
+				object1->used == object2->used &&
+				zend_string_equals(object1->buffer, object2->buffer)
+				) {
+				return 0;
+			}
+		}
+	}
+
+	return 1;
+}
+
+#define BYTE_BUFFER_METHOD(name) PHP_METHOD(pmmp_encoding_ByteBuffer, name)
+
+BYTE_BUFFER_METHOD(__construct) {
+	zend_string* buffer = NULL;
 	byte_buffer_zend_object* object;
 
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 0, 1)
+		Z_PARAM_OPTIONAL
+		Z_PARAM_STR(buffer)
+		ZEND_PARSE_PARAMETERS_END();
+
+	object = BYTE_BUFFER_THIS();
+	if (object->buffer) {
+		zend_string_release_ex(object->buffer, 0);
+	}
+
+	if (buffer == NULL) {
+		buffer = zend_empty_string;
+	}
+	//read offset is placed at the start, and write offset at the end (to mirror PM BinaryStream behaviour)
+	byte_buffer_init_properties(object, buffer, ZSTR_LEN(buffer), 0, ZSTR_LEN(buffer));
+}
+
+BYTE_BUFFER_METHOD(toString) {
 	zend_parse_parameters_none_throw();
 
-	object = BYTE_BUFFER_THIS();
-
-	TValue result;
-	auto bytes = reinterpret_cast<unsigned char*>(ZSTR_VAL(object->buffer));
-	if (readTypeFunc(bytes, object->used, object->read_offset, result)) {
-		assignResult(return_value, result);
-	}
+	auto object = BYTE_BUFFER_THIS();
+	RETURN_STRINGL(ZSTR_VAL(object->buffer), object->used);
 }
 
-
-template<typename TValue>
-static bool zend_parse_parameters_long_wrapper(zend_execute_data* execute_data, TValue& value) {
-	zend_long actualValue;
-
-	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
-		Z_PARAM_LONG(actualValue)
-		ZEND_PARSE_PARAMETERS_END_EX(return false);
-
-	value = static_cast<TValue>(actualValue);
-
-	return true;
-}
-
-template<typename TValue>
-static bool zend_parse_parameters_double_wrapper(zend_execute_data* execute_data, TValue& value) {
-	double actualValue;
-	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
-		Z_PARAM_DOUBLE(actualValue)
-		ZEND_PARSE_PARAMETERS_END_EX(return false);
-
-	value = static_cast<TValue>(actualValue);
-
-	return true;
-}
-
-template<typename TValue>
-using parseParametersFunc_t = bool (*)(zend_execute_data* execute_data, TValue& value);
-
-template<typename TValue>
-using writeTypeFunc_t = void (*)(zend_string*& buffer, size_t& offset, TValue value);
-
-template<typename TValue, parseParametersFunc_t<TValue> parseParametersFunc, writeTypeFunc_t<TValue> writeTypeFunc>
-void ZEND_FASTCALL zif_writeType(INTERNAL_FUNCTION_PARAMETERS) {
-	TValue value;
+BYTE_BUFFER_METHOD(readByteArray) {
+	zend_long zlength;
 	byte_buffer_zend_object* object;
 
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
+		Z_PARAM_LONG(zlength)
+		ZEND_PARSE_PARAMETERS_END();
+
+	if (zlength < 0) {
+		zend_value_error("Length cannot be negative");
+		return;
+	}
+	if (zlength == 0) { //to mirror PM BinaryStream behaviour
+		RETURN_STR(zend_empty_string);
+	}
+
+	size_t length = static_cast<size_t>(zlength);
+
 	object = BYTE_BUFFER_THIS();
 
-	//offsets beyond the end of the buffer are allowed, and result in automatic buffer extension
-	if (!parseParametersFunc(execute_data, value)) {
+	if (object->used - object->read_offset < length) {
+		zend_throw_exception_ex(data_decode_exception_ce, 0, "Need at least %zu bytes, but only have %zu bytes", length, object->used - object->read_offset);
 		return;
 	}
 
-	writeTypeFunc(object->buffer, object->write_offset, value);
+	RETVAL_STRINGL(ZSTR_VAL(object->buffer) + object->read_offset, length);
+	object->read_offset += length;
+}
+
+BYTE_BUFFER_METHOD(writeByteArray) {
+	zend_string* value;
+	byte_buffer_zend_object* object;
+
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
+		Z_PARAM_STR(value)
+		ZEND_PARSE_PARAMETERS_END();
+
+
+	object = BYTE_BUFFER_THIS();
+
+	auto size = ZSTR_LEN(value);
+
+	extendBuffer(object->buffer, object->write_offset, size);
+	memcpy(ZSTR_VAL(object->buffer) + object->write_offset, ZSTR_VAL(value), size);
+	object->write_offset += size;
 	if (object->write_offset > object->used) {
 		object->used = object->write_offset;
 	}
 }
 
-#define READ_FIXED_TYPE_FENTRY(zend_name, native_type, result_wrapper, arg_info) \
-	ZEND_RAW_FENTRY("read" zend_name "LE", (zif_readType<native_type, (readFixedSizeType<native_type, ByteOrder::LittleEndian>), result_wrapper>), arg_info, ZEND_ACC_PUBLIC) \
-	ZEND_RAW_FENTRY("read" zend_name "BE", (zif_readType<native_type, (readFixedSizeType<native_type, ByteOrder::BigEndian>), result_wrapper>), arg_info, ZEND_ACC_PUBLIC)
+#define OFFSET_METHODS(func_name, which_offset) \
+	BYTE_BUFFER_METHOD(get##func_name) { \
+		zend_parse_parameters_none_throw(); \
+		auto object = BYTE_BUFFER_THIS(); \
+		RETURN_LONG(object->which_offset); \
+	} \
+	BYTE_BUFFER_METHOD(set##func_name) { \
+		zend_long offset; \
+	\
+		ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1) \
+			Z_PARAM_LONG(offset) \
+		ZEND_PARSE_PARAMETERS_END(); \
+	\
+		auto object = BYTE_BUFFER_THIS(); \
+		if (offset < 0 || static_cast<size_t>(offset) > object->used) { \
+			zend_value_error("Offset must not be less than zero or greater than the buffer size"); \
+			return; \
+		} \
+	\
+		object->which_offset = static_cast<size_t>(offset); \
+	}
 
-#define READ_VARINT_FENTRY(size_name, unsigned_type, signed_type) \
-	ZEND_RAW_FENTRY("readUnsignedVar" size_name, (zif_readType<unsigned_type, (readUnsignedVarInt<unsigned_type>), zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC) \
-	ZEND_RAW_FENTRY("readSignedVar" size_name, (zif_readType<signed_type, (readSignedVarInt<unsigned_type, signed_type>), zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC)
+OFFSET_METHODS(ReadOffset, read_offset);
+OFFSET_METHODS(WriteOffset, write_offset);
 
-#define WRITE_FIXED_TYPE_FENTRY(zend_name, native_type, parse_parameters_wrapper, arg_info) \
-	ZEND_RAW_FENTRY("write" zend_name "LE", (zif_writeType<native_type, parse_parameters_wrapper<native_type>, (writeFixedSizeType<native_type, ByteOrder::LittleEndian>)>), arg_info, ZEND_ACC_PUBLIC) \
-	ZEND_RAW_FENTRY("write" zend_name "BE", (zif_writeType<native_type, parse_parameters_wrapper<native_type>, (writeFixedSizeType<native_type, ByteOrder::BigEndian>)>), arg_info, ZEND_ACC_PUBLIC)
+BYTE_BUFFER_METHOD(getUsedLength) {
+	zend_parse_parameters_none_throw();
 
-#define WRITE_VARINT_FENTRY(size_name, unsigned_type, signed_type) \
-	ZEND_RAW_FENTRY("writeUnsignedVar" size_name, (zif_writeType<unsigned_type, zend_parse_parameters_long_wrapper<unsigned_type>, (writeUnsignedVarInt<unsigned_type>)>), arginfo_write_integer, ZEND_ACC_PUBLIC) \
-	ZEND_RAW_FENTRY("writeSignedVar" size_name, (zif_writeType<signed_type, zend_parse_parameters_long_wrapper<signed_type>, (writeSignedVarInt<unsigned_type, signed_type>)>), arginfo_write_integer, ZEND_ACC_PUBLIC)
+	auto object = BYTE_BUFFER_THIS();
+	RETURN_LONG(object->used);
+}
 
-#define READ_WRITE_LONG_ENTRY(zend_name, unsigned_native, signed_native) \
-	READ_FIXED_TYPE_FENTRY("Unsigned" zend_name, unsigned_native, zval_long_wrapper, arginfo_read_integer) \
-	READ_FIXED_TYPE_FENTRY("Signed" zend_name, signed_native, zval_long_wrapper, arginfo_read_integer) \
-	WRITE_FIXED_TYPE_FENTRY("Unsigned" zend_name, unsigned_native, zend_parse_parameters_long_wrapper, arginfo_write_integer) \
-	WRITE_FIXED_TYPE_FENTRY("Signed" zend_name, signed_native, zend_parse_parameters_long_wrapper, arginfo_write_integer)
+BYTE_BUFFER_METHOD(getReservedLength) {
+	zend_parse_parameters_none_throw();
 
-#define READ_WRITE_FLOAT_ENTRY(zend_name, native_type) \
-	READ_FIXED_TYPE_FENTRY(zend_name, native_type, zval_double_wrapper, arginfo_read_float) \
-	WRITE_FIXED_TYPE_FENTRY(zend_name, native_type, zend_parse_parameters_double_wrapper, arginfo_write_float)
+	auto object = BYTE_BUFFER_THIS();
+	RETURN_LONG(ZSTR_LEN(object->buffer));
+}
 
-#define READ_WRITE_VARINT_ENTRY(zend_name, unsigned_type, signed_type) \
-	READ_VARINT_FENTRY(zend_name, unsigned_type, signed_type) \
-	WRITE_VARINT_FENTRY(zend_name, unsigned_type, signed_type)
+BYTE_BUFFER_METHOD(reserve) {
+	zend_long zlength;
 
-#define READ_WRITE_BYTE_ENTRY(zend_name, native_type) \
-	ZEND_RAW_FENTRY("read" zend_name, (zif_readType<native_type, readByte<native_type>, zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC) \
-	ZEND_RAW_FENTRY("write" zend_name, (zif_writeType<native_type, zend_parse_parameters_long_wrapper<native_type>, writeByte<native_type>>), arginfo_write_integer, ZEND_ACC_PUBLIC)
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
+		Z_PARAM_LONG(zlength)
+		ZEND_PARSE_PARAMETERS_END();
 
-#define READ_TRIAD_ENTRY(zend_name, native_type) \
-	ZEND_RAW_FENTRY("read" zend_name "BE", (zif_readType<native_type, readInt24<native_type, ByteOrder::BigEndian>, zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC) \
-	ZEND_RAW_FENTRY("read" zend_name "LE", (zif_readType<native_type, readInt24<native_type, ByteOrder::LittleEndian>, zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC)
+	if (zlength <= 0) {
+		zend_value_error("Length must be greater than zero");
+		return;
+	}
+	auto object = BYTE_BUFFER_THIS();
+	extendBuffer(object->buffer, static_cast<size_t>(zlength), 0);
+}
 
-#define WRITE_TRIAD_ENTRY(zend_name, native_type) \
-	ZEND_RAW_FENTRY("write" zend_name "BE", (zif_writeType<native_type, zend_parse_parameters_long_wrapper<native_type>, writeInt24<native_type, ByteOrder::BigEndian>>), arginfo_write_integer, ZEND_ACC_PUBLIC) \
-	ZEND_RAW_FENTRY("write" zend_name "LE", (zif_writeType<native_type, zend_parse_parameters_long_wrapper<native_type>, writeInt24<native_type, ByteOrder::LittleEndian>>), arginfo_write_integer, ZEND_ACC_PUBLIC)
+BYTE_BUFFER_METHOD(trim) {
+	zend_parse_parameters_none_throw();
 
-#define READ_WRITE_TRIAD_ENTRY(zend_name, native_type) \
-	READ_TRIAD_ENTRY(zend_name, native_type) \
-	WRITE_TRIAD_ENTRY(zend_name, native_type)
+	auto object = BYTE_BUFFER_THIS();
+	if (ZSTR_LEN(object->buffer) > object->used) {
+		object->buffer = zend_string_truncate(object->buffer, object->used, 0);
+	}
+}
 
-static zend_function_entry byte_buffer_methods[] = {
-	READ_WRITE_BYTE_ENTRY("UnsignedByte", uint8_t)
-	READ_WRITE_BYTE_ENTRY("SignedByte", int8_t)
+BYTE_BUFFER_METHOD(clear) {
+	zend_parse_parameters_none_throw();
 
-	READ_WRITE_LONG_ENTRY("Short", uint16_t, int16_t)
-	READ_WRITE_LONG_ENTRY("Int", uint32_t, int32_t)
+	auto object = BYTE_BUFFER_THIS();
+	object->read_offset = 0;
+	object->write_offset = 0;
+	object->used = 0;
+}
 
-	READ_FIXED_TYPE_FENTRY("SignedLong", int64_t, zval_long_wrapper, arginfo_read_integer)
-	WRITE_FIXED_TYPE_FENTRY("SignedLong", int64_t, zend_parse_parameters_long_wrapper, arginfo_write_integer)
+BYTE_BUFFER_METHOD(__serialize) {
+	zend_parse_parameters_none_throw();
 
-	READ_WRITE_FLOAT_ENTRY("Float", float)
-	READ_WRITE_FLOAT_ENTRY("Double", double)
+	auto object = BYTE_BUFFER_THIS();
+	array_init(return_value);
+	add_assoc_stringl(return_value, "buffer", ZSTR_VAL(object->buffer), object->used);
+	add_assoc_long(return_value, "read_offset", object->read_offset);
+	add_assoc_long(return_value, "write_offset", object->write_offset);
+}
 
-	READ_WRITE_VARINT_ENTRY("Int", uint32_t, int32_t)
-	READ_WRITE_VARINT_ENTRY("Long", uint64_t, int64_t)
+static zval* fetch_serialized_property(HashTable* data, const char* name, int type) {
+	zval* zv = zend_hash_str_find(data, name, strlen(name));
+	if (zv == NULL) {
+		zend_throw_exception_ex(NULL, 0, "Serialized data is missing \"%s\"", name);
+		return NULL;
+	}
+	if (Z_TYPE_P(zv) != type) {
+		zend_throw_exception_ex(NULL, 0, "\"%s\" in serialized data should be of type %s, but have %s", name, zend_zval_type_name(zv), zend_get_type_by_const(type));
+		return NULL;
+	}
 
-	READ_WRITE_TRIAD_ENTRY("UnsignedTriad", uint32_t)
-	READ_WRITE_TRIAD_ENTRY("SignedTriad", int32_t)
+	return zv;
+}
 
-	PHP_FE_END
-};
+BYTE_BUFFER_METHOD(__unserialize) {
+	HashTable* data;
+
+	ZEND_PARSE_PARAMETERS_START(1, 1)
+		Z_PARAM_ARRAY_HT(data)
+		ZEND_PARSE_PARAMETERS_END();
+
+	zval* buffer = fetch_serialized_property(data, "buffer", IS_STRING);
+	if (buffer == NULL) {
+		return;
+	}
+	zval* read_offset = fetch_serialized_property(data, "read_offset", IS_LONG);
+	if (read_offset == NULL) {
+		return;
+	}
+	zval* write_offset = fetch_serialized_property(data, "write_offset", IS_LONG);
+	if (write_offset == NULL) {
+		return;
+	}
+
+	auto object = BYTE_BUFFER_THIS();
+
+	byte_buffer_init_properties(object, Z_STR_P(buffer), Z_STRLEN_P(buffer), Z_LVAL_P(read_offset), Z_LVAL_P(write_offset));
+}
+
+BYTE_BUFFER_METHOD(__debugInfo) {
+	zend_parse_parameters_none_throw();
+
+	auto object = BYTE_BUFFER_THIS();
+	array_init(return_value);
+	add_assoc_stringl(return_value, "buffer", ZSTR_VAL(object->buffer), object->used);
+	add_assoc_long(return_value, "read_offset", object->read_offset);
+	add_assoc_long(return_value, "write_offset", object->write_offset);
+}
 
 zend_class_entry* init_class_ByteBuffer(void) {
-	zend_class_entry* base_byte_buffer_ce = init_class_BaseByteBuffer();
-	zend_class_entry ce;
-	INIT_CLASS_ENTRY(ce, "pmmp\\encoding\\ByteBuffer", byte_buffer_methods);
-	zend_class_entry* byte_buffer_ce = zend_register_internal_class_ex(&ce, base_byte_buffer_ce);
-	byte_buffer_ce->ce_flags |= ZEND_ACC_FINAL | ZEND_ACC_NO_DYNAMIC_PROPERTIES;
+	byte_buffer_ce = register_class_pmmp_encoding_ByteBuffer();
+	byte_buffer_ce->create_object = byte_buffer_new;
+
+	byte_buffer_zend_object_handlers = *zend_get_std_object_handlers();
+	byte_buffer_zend_object_handlers.offset = XtOffsetOf(byte_buffer_zend_object, std);
+	byte_buffer_zend_object_handlers.clone_obj = byte_buffer_clone;
+	byte_buffer_zend_object_handlers.free_obj = byte_buffer_free;
+	byte_buffer_zend_object_handlers.compare = byte_buffer_compare_objects;
 
 	return byte_buffer_ce;
 }

@@ -21,16 +21,17 @@ encoding
 <?php
 
 use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\Types;
 
 $buffer = new ByteBuffer("");
-$buffer->writeUnsignedVarInt(-1);
+Types::writeUnsignedVarInt($buffer, -1);
 $buffer->setReadOffset(0);
-var_dump($buffer->readUnsignedVarInt());
+var_dump(Types::readUnsignedVarInt($buffer));
 
 $buffer->setWriteOffset(0);
-$buffer->writeUnsignedVarLong(-1);
+Types::writeUnsignedVarLong($buffer, -1);
 $buffer->setReadOffset(0);
-var_dump($buffer->readUnsignedVarLong());
+var_dump(Types::readUnsignedVarLong($buffer));
 
 ?>
 --EXPECT--

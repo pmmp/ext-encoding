@@ -1,25 +1,27 @@
 <?php
 
+use pmmp\encoding\Types;
+
 return [
-	'readUnsignedShortLE' => "\xff\xff",
-	'readSignedShortLE' => "\xff\xff",
-	'readUnsignedShortBE' => "\xff\xff",
-	'readSignedShortBE' => "\xff\xff",
+    [Types::readUnsignedShortLE(...), "\xff\xff"],
+    [Types::readSignedShortLE(...), "\xff\xff"],
+    [Types::readUnsignedShortBE(...), "\xff\xff"],
+    [Types::readSignedShortBE(...), "\xff\xff"],
 
-	'readUnsignedIntLE' => "\xff\xff\xff\xff",
-	'readSignedIntLE' => "\xff\xff\xff\xff",
-	'readFloatLE' => "\x11\xff\xff\x11",
-	'readUnsignedIntBE' => "\xff\xff\xff\xff",
-	'readSignedIntBE' => "\xff\xff\xff\xff",
-	'readFloatBE' => "\x11\xff\xff\x11",
+    [Types::readUnsignedIntLE(...), "\xff\xff\xff\xff"],
+    [Types::readSignedIntLE(...), "\xff\xff\xff\xff"],
+    [Types::readFloatLE(...), "\x11\xff\xff\x11"],
+    [Types::readUnsignedIntBE(...), "\xff\xff\xff\xff"],
+    [Types::readSignedIntBE(...), "\xff\xff\xff\xff"],
+    [Types::readFloatBE(...), "\x11\xff\xff\x11"],
 
-	'readSignedLongLE' => "\xff\xff\xff\xff\xff\xff\xff\xff",
-	'readSignedLongBE' => "\xff\xff\xff\xff\xff\xff\xff\xff",
-	'readDoubleLE' => "\x11\xff\xff\x11\x11\xff\xff\x11",
-	'readDoubleBE' => "\x11\xff\xff\x11\x11\xff\xff\x11",
+    [Types::readSignedLongLE(...), "\xff\xff\xff\xff\xff\xff\xff\xff"],
+    [Types::readSignedLongBE(...), "\xff\xff\xff\xff\xff\xff\xff\xff"],
+    [Types::readDoubleLE(...), "\x11\xff\xff\x11\x11\xff\xff\x11"],
+    [Types::readDoubleBE(...), "\x11\xff\xff\x11\x11\xff\xff\x11"],
 
-	'readUnsignedTriadBE' => "\xff\xee\xdd",
-	'readUnsignedTriadLE' => "\xdd\xee\xff",
-	'readSignedTriadBE' => "\xff\xee\xdd",
-	'readSignedTriadLE' => "\xdd\xee\xff",
+    [Types::readUnsignedTriadBE(...), "\xff\xee\xdd"],
+    [Types::readUnsignedTriadLE(...), "\xdd\xee\xff"],
+    [Types::readSignedTriadBE(...), "\xff\xee\xdd"],
+    [Types::readSignedTriadLE(...), "\xdd\xee\xff"],
 ];

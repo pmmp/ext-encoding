@@ -8,6 +8,7 @@ uninitialized values to PHP.
 
 use pmmp\encoding\ByteBuffer;
 use pmmp\encoding\DataDecodeException;
+use pmmp\encoding\Types;
 
 $buffer = new ByteBuffer("");
 $buffer->reserve(100);
@@ -19,7 +20,7 @@ try{
 }
 
 try{
-    var_dump($buffer->readUnsignedByte());
+    var_dump(Types::readUnsignedByte($buffer));
 }catch(DataDecodeException $e){
     echo $e->getMessage() . PHP_EOL;
 }

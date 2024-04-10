@@ -4,5 +4,5 @@ if (PHP_ENCODING != 'no') {
 	AC_DEFINE('HAVE_ENCODING', 1, 'encoding support enabled');
 
 	EXTENSION('encoding', 'encoding.cpp', null, '/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1 /permissive-');
-	ADD_SOURCES(configure_module_dirname + '/classes', 'BaseByteBuffer.cpp ByteBuffer.cpp', 'encoding');
+	ADD_SOURCES(configure_module_dirname + '/classes', 'ByteBuffer.cpp Types.cpp', 'encoding');
 }

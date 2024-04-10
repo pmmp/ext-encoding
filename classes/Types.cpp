@@ -189,17 +189,20 @@ static zend_function_entry varint_methods[] = {
 
 void init_class_Types(void) {
 	zend_class_entry ce;
-	ce.ce_flags = ZEND_ACC_FINAL | ZEND_ACC_NO_DYNAMIC_PROPERTIES;
 
 	INIT_NS_CLASS_ENTRY(ce, "pmmp\\encoding", "Byte", byte_methods);
+	ce.ce_flags |= ZEND_ACC_FINAL | ZEND_ACC_NO_DYNAMIC_PROPERTIES;
 	zend_register_internal_class(&ce);
 
 	INIT_NS_CLASS_ENTRY(ce, "pmmp\\encoding", "BE", big_endian_methods);
+	ce.ce_flags |= ZEND_ACC_FINAL | ZEND_ACC_NO_DYNAMIC_PROPERTIES;
 	zend_register_internal_class(&ce);
 
 	INIT_NS_CLASS_ENTRY(ce, "pmmp\\encoding", "LE", little_endian_methods);
+	ce.ce_flags |= ZEND_ACC_FINAL | ZEND_ACC_NO_DYNAMIC_PROPERTIES;
 	zend_register_internal_class(&ce);
 
 	INIT_NS_CLASS_ENTRY(ce, "pmmp\\encoding", "VarInt", varint_methods);
+	ce.ce_flags |= ZEND_ACC_FINAL | ZEND_ACC_NO_DYNAMIC_PROPERTIES;
 	zend_register_internal_class(&ce);
 }

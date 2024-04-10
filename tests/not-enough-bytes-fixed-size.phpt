@@ -16,7 +16,9 @@ foreach($functions as [$function, $buf]){
 		$buffer = new ByteBuffer("\x00");
         $function($buffer);
 	}catch(DataDecodeException $e){
-		echo (new \ReflectionFunction($function))->getShortName() . " no offset: " . $e->getMessage() . "\n";
+		$reflect = new \ReflectionFunction($function);
+
+		echo $reflect->getClosureScopeClass()->getShortName() . "::" . $reflect->getName() . " no offset: " . $e->getMessage() . "\n";
 	}
 
 	try{
@@ -24,7 +26,9 @@ foreach($functions as [$function, $buf]){
 		$buffer->setReadOffset(15);
         $function($buffer);
 	}catch(DataDecodeException $e){
-		echo (new \ReflectionFunction($function))->getShortName() . " with offset: " . $e->getMessage() . "\n";
+		$reflect = new \ReflectionFunction($function);
+
+		echo $reflect->getClosureScopeClass()->getShortName() . "::" . $reflect->getName() . " with offset: " . $e->getMessage() . "\n";
 	}
 
 	echo "\n";
@@ -32,56 +36,56 @@ foreach($functions as [$function, $buf]){
 
 ?>
 --EXPECT--
-readUnsignedShortLE no offset: Need at least 2 bytes, but only have 1 bytes
-readUnsignedShortLE with offset: Need at least 2 bytes, but only have 1 bytes
+LE::readUnsignedShort no offset: Need at least 2 bytes, but only have 1 bytes
+LE::readUnsignedShort with offset: Need at least 2 bytes, but only have 1 bytes
 
-readSignedShortLE no offset: Need at least 2 bytes, but only have 1 bytes
-readSignedShortLE with offset: Need at least 2 bytes, but only have 1 bytes
+LE::readSignedShort no offset: Need at least 2 bytes, but only have 1 bytes
+LE::readSignedShort with offset: Need at least 2 bytes, but only have 1 bytes
 
-readUnsignedShortBE no offset: Need at least 2 bytes, but only have 1 bytes
-readUnsignedShortBE with offset: Need at least 2 bytes, but only have 1 bytes
+BE::readUnsignedShort no offset: Need at least 2 bytes, but only have 1 bytes
+BE::readUnsignedShort with offset: Need at least 2 bytes, but only have 1 bytes
 
-readSignedShortBE no offset: Need at least 2 bytes, but only have 1 bytes
-readSignedShortBE with offset: Need at least 2 bytes, but only have 1 bytes
+BE::readSignedShort no offset: Need at least 2 bytes, but only have 1 bytes
+BE::readSignedShort with offset: Need at least 2 bytes, but only have 1 bytes
 
-readUnsignedIntLE no offset: Need at least 4 bytes, but only have 1 bytes
-readUnsignedIntLE with offset: Need at least 4 bytes, but only have 1 bytes
+LE::readUnsignedInt no offset: Need at least 4 bytes, but only have 1 bytes
+LE::readUnsignedInt with offset: Need at least 4 bytes, but only have 1 bytes
 
-readSignedIntLE no offset: Need at least 4 bytes, but only have 1 bytes
-readSignedIntLE with offset: Need at least 4 bytes, but only have 1 bytes
+LE::readSignedInt no offset: Need at least 4 bytes, but only have 1 bytes
+LE::readSignedInt with offset: Need at least 4 bytes, but only have 1 bytes
 
-readFloatLE no offset: Need at least 4 bytes, but only have 1 bytes
-readFloatLE with offset: Need at least 4 bytes, but only have 1 bytes
+LE::readFloat no offset: Need at least 4 bytes, but only have 1 bytes
+LE::readFloat with offset: Need at least 4 bytes, but only have 1 bytes
 
-readUnsignedIntBE no offset: Need at least 4 bytes, but only have 1 bytes
-readUnsignedIntBE with offset: Need at least 4 bytes, but only have 1 bytes
+BE::readUnsignedInt no offset: Need at least 4 bytes, but only have 1 bytes
+BE::readUnsignedInt with offset: Need at least 4 bytes, but only have 1 bytes
 
-readSignedIntBE no offset: Need at least 4 bytes, but only have 1 bytes
-readSignedIntBE with offset: Need at least 4 bytes, but only have 1 bytes
+BE::readSignedInt no offset: Need at least 4 bytes, but only have 1 bytes
+BE::readSignedInt with offset: Need at least 4 bytes, but only have 1 bytes
 
-readFloatBE no offset: Need at least 4 bytes, but only have 1 bytes
-readFloatBE with offset: Need at least 4 bytes, but only have 1 bytes
+BE::readFloat no offset: Need at least 4 bytes, but only have 1 bytes
+BE::readFloat with offset: Need at least 4 bytes, but only have 1 bytes
 
-readSignedLongLE no offset: Need at least 8 bytes, but only have 1 bytes
-readSignedLongLE with offset: Need at least 8 bytes, but only have 1 bytes
+LE::readSignedLong no offset: Need at least 8 bytes, but only have 1 bytes
+LE::readSignedLong with offset: Need at least 8 bytes, but only have 1 bytes
 
-readSignedLongBE no offset: Need at least 8 bytes, but only have 1 bytes
-readSignedLongBE with offset: Need at least 8 bytes, but only have 1 bytes
+BE::readSignedLong no offset: Need at least 8 bytes, but only have 1 bytes
+BE::readSignedLong with offset: Need at least 8 bytes, but only have 1 bytes
 
-readDoubleLE no offset: Need at least 8 bytes, but only have 1 bytes
-readDoubleLE with offset: Need at least 8 bytes, but only have 1 bytes
+LE::readDouble no offset: Need at least 8 bytes, but only have 1 bytes
+LE::readDouble with offset: Need at least 8 bytes, but only have 1 bytes
 
-readDoubleBE no offset: Need at least 8 bytes, but only have 1 bytes
-readDoubleBE with offset: Need at least 8 bytes, but only have 1 bytes
+BE::readDouble no offset: Need at least 8 bytes, but only have 1 bytes
+BE::readDouble with offset: Need at least 8 bytes, but only have 1 bytes
 
-readUnsignedTriadBE no offset: Need at least 3 bytes, but only have 1 bytes
-readUnsignedTriadBE with offset: Need at least 3 bytes, but only have 1 bytes
+BE::readUnsignedTriad no offset: Need at least 3 bytes, but only have 1 bytes
+BE::readUnsignedTriad with offset: Need at least 3 bytes, but only have 1 bytes
 
-readUnsignedTriadLE no offset: Need at least 3 bytes, but only have 1 bytes
-readUnsignedTriadLE with offset: Need at least 3 bytes, but only have 1 bytes
+LE::readUnsignedTriad no offset: Need at least 3 bytes, but only have 1 bytes
+LE::readUnsignedTriad with offset: Need at least 3 bytes, but only have 1 bytes
 
-readSignedTriadBE no offset: Need at least 3 bytes, but only have 1 bytes
-readSignedTriadBE with offset: Need at least 3 bytes, but only have 1 bytes
+BE::readSignedTriad no offset: Need at least 3 bytes, but only have 1 bytes
+BE::readSignedTriad with offset: Need at least 3 bytes, but only have 1 bytes
 
-readSignedTriadLE no offset: Need at least 3 bytes, but only have 1 bytes
-readSignedTriadLE with offset: Need at least 3 bytes, but only have 1 bytes
+LE::readSignedTriad no offset: Need at least 3 bytes, but only have 1 bytes
+LE::readSignedTriad with offset: Need at least 3 bytes, but only have 1 bytes

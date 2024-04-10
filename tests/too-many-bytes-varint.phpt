@@ -15,31 +15,31 @@ encoding
 
 use pmmp\encoding\ByteBuffer;
 use pmmp\encoding\DataDecodeException;
-use pmmp\encoding\Types;
+use pmmp\encoding\VarInt;
 
 $shortBuf = str_repeat("\x80", 6);
 $longBuf = str_repeat("\x80", 11);
 
 try{
-	Types::readUnsignedVarInt(new ByteBuffer($shortBuf));
+	VarInt::readUnsignedInt(new ByteBuffer($shortBuf));
 }catch(DataDecodeException $e){
 	echo "uv32: " . $e->getMessage() . PHP_EOL;
 }
 
 try{
-	Types::readSignedVarInt(new ByteBuffer($shortBuf));
+	VarInt::readSignedInt(new ByteBuffer($shortBuf));
 }catch(DataDecodeException $e){
 	echo "sv32: " . $e->getMessage() . PHP_EOL;
 }
 
 try{
-	Types::readUnsignedVarLong(new ByteBuffer($longBuf));
+	VarInt::readUnsignedLong(new ByteBuffer($longBuf));
 }catch(DataDecodeException $e){
 	echo "uv64: " . $e->getMessage() . PHP_EOL;
 }
 
 try{
-	Types::readSignedVarLong(new ByteBuffer($longBuf));
+	VarInt::readSignedLong(new ByteBuffer($longBuf));
 }catch(DataDecodeException $e){
 	echo "sv64: " . $e->getMessage() . PHP_EOL;
 }

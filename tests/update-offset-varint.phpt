@@ -6,7 +6,7 @@ encoding
 <?php
 
 use pmmp\encoding\ByteBuffer;
-use pmmp\encoding\Types;
+use pmmp\encoding\VarInt;
 
 function test(\Closure $function, int $size) : void{
 	$varint = str_repeat(str_repeat("\x80", $size - 1) . "\x00", 3);
@@ -18,10 +18,10 @@ function test(\Closure $function, int $size) : void{
 	var_dump($buffer->getReadOffset() === $size + $originalOffset);
 }
 
-test(Types::readUnsignedVarInt(...), 5);
-test(Types::readSignedVarInt(...), 5);
-test(Types::readUnsignedVarLong(...), 10);
-test(Types::readSignedVarLong(...), 10);
+test(VarInt::readUnsignedInt(...), 5);
+test(VarInt::readSignedInt(...), 5);
+test(VarInt::readUnsignedLong(...), 10);
+test(VarInt::readSignedLong(...), 10);
 
 ?>
 --EXPECT--

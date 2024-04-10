@@ -7,7 +7,7 @@ encoding
 
 use pmmp\encoding\ByteBuffer;
 use pmmp\encoding\DataDecodeException;
-use pmmp\encoding\Types;
+use pmmp\encoding\VarInt;
 
 function test(\Closure $function) : void{
 	$buffer = new ByteBuffer("\x80");
@@ -28,10 +28,10 @@ function test(\Closure $function) : void{
 	echo "\n";
 }
 
-test(Types::readUnsignedVarInt(...));
-test(Types::readSignedVarInt(...));
-test(Types::readUnsignedVarLong(...));
-test(Types::readSignedVarLong(...));
+test(VarInt::readUnsignedInt(...));
+test(VarInt::readSignedInt(...));
+test(VarInt::readUnsignedLong(...));
+test(VarInt::readSignedLong(...));
 
 ?>
 --EXPECT--

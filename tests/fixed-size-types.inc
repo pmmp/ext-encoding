@@ -1,27 +1,28 @@
 <?php
 
-use pmmp\encoding\Types;
+use pmmp\encoding\BE;
+use pmmp\encoding\LE;
 
 return [
-    [Types::readUnsignedShortLE(...), "\xff\xff"],
-    [Types::readSignedShortLE(...), "\xff\xff"],
-    [Types::readUnsignedShortBE(...), "\xff\xff"],
-    [Types::readSignedShortBE(...), "\xff\xff"],
+    [LE::readUnsignedShort(...), "\xff\xff"],
+    [LE::readSignedShort(...), "\xff\xff"],
+    [BE::readUnsignedShort(...), "\xff\xff"],
+    [BE::readSignedShort(...), "\xff\xff"],
 
-    [Types::readUnsignedIntLE(...), "\xff\xff\xff\xff"],
-    [Types::readSignedIntLE(...), "\xff\xff\xff\xff"],
-    [Types::readFloatLE(...), "\x11\xff\xff\x11"],
-    [Types::readUnsignedIntBE(...), "\xff\xff\xff\xff"],
-    [Types::readSignedIntBE(...), "\xff\xff\xff\xff"],
-    [Types::readFloatBE(...), "\x11\xff\xff\x11"],
+    [LE::readUnsignedInt(...), "\xff\xff\xff\xff"],
+    [LE::readSignedInt(...), "\xff\xff\xff\xff"],
+    [LE::readFloat(...), "\x11\xff\xff\x11"],
+    [BE::readUnsignedInt(...), "\xff\xff\xff\xff"],
+    [BE::readSignedInt(...), "\xff\xff\xff\xff"],
+    [BE::readFloat(...), "\x11\xff\xff\x11"],
 
-    [Types::readSignedLongLE(...), "\xff\xff\xff\xff\xff\xff\xff\xff"],
-    [Types::readSignedLongBE(...), "\xff\xff\xff\xff\xff\xff\xff\xff"],
-    [Types::readDoubleLE(...), "\x11\xff\xff\x11\x11\xff\xff\x11"],
-    [Types::readDoubleBE(...), "\x11\xff\xff\x11\x11\xff\xff\x11"],
+    [LE::readSignedLong(...), "\xff\xff\xff\xff\xff\xff\xff\xff"],
+    [BE::readSignedLong(...), "\xff\xff\xff\xff\xff\xff\xff\xff"],
+    [LE::readDouble(...), "\x11\xff\xff\x11\x11\xff\xff\x11"],
+    [BE::readDouble(...), "\x11\xff\xff\x11\x11\xff\xff\x11"],
 
-    [Types::readUnsignedTriadBE(...), "\xff\xee\xdd"],
-    [Types::readUnsignedTriadLE(...), "\xdd\xee\xff"],
-    [Types::readSignedTriadBE(...), "\xff\xee\xdd"],
-    [Types::readSignedTriadLE(...), "\xdd\xee\xff"],
+    [BE::readUnsignedTriad(...), "\xff\xee\xdd"],
+    [LE::readUnsignedTriad(...), "\xdd\xee\xff"],
+    [BE::readSignedTriad(...), "\xff\xee\xdd"],
+    [LE::readSignedTriad(...), "\xdd\xee\xff"],
 ];

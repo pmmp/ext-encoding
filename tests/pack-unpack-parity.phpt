@@ -4,30 +4,32 @@ Test that ByteBuffer read/write methods behave the same as their pack/unpack equ
 <?php
 
 use pmmp\encoding\ByteBuffer;
-use pmmp\encoding\Types;
+use pmmp\encoding\BE;
+use pmmp\encoding\LE;
+use pmmp\encoding\Byte;
 
 $map = [
-    "C" => [Types::readUnsignedByte(...), Types::writeUnsignedByte(...), [0, 127, 128, 255]],
-    "c" => [Types::readSignedByte(...), Types::writeSignedByte(...), [-128, -1, 0, 1, 127]],
+    "C" => [Byte::readUnsigned(...), Byte::writeUnsigned(...), [0, 127, 128, 255]],
+    "c" => [Byte::readSigned(...), Byte::writeSigned(...), [-128, -1, 0, 1, 127]],
 
     //signed short doesn't have any pack() equivalent
-    "n" => [Types::readUnsignedShortBE(...), Types::writeUnsignedShortBE(...), [0, 1, 32767, 32768, 65535]],
-    "v" => [Types::readUnsignedShortLE(...), Types::writeUnsignedShortLE(...), [0, 1, 32767, 32768, 65535]],
+    "n" => [BE::readUnsignedShort(...), BE::writeUnsignedShort(...), [0, 1, 32767, 32768, 65535]],
+    "v" => [LE::readUnsignedShort(...), LE::writeUnsignedShort(...), [0, 1, 32767, 32768, 65535]],
 
     //signed long doesn't have any pack() equivalent
-    "N" => [Types::readUnsignedIntBE(...), Types::writeUnsignedIntBE(...), [0, 1, 2147483647, 2147483648, 4294967295]],
-    "V" => [Types::readUnsignedIntLE(...), Types::writeUnsignedIntLE(...), [0, 1, 2147483647, 2147483648, 4294967295]],
+    "N" => [BE::readUnsignedInt(...), BE::writeUnsignedInt(...), [0, 1, 2147483647, 2147483648, 4294967295]],
+    "V" => [LE::readUnsignedInt(...), LE::writeUnsignedInt(...), [0, 1, 2147483647, 2147483648, 4294967295]],
 
     //these codes are supposed to be unsigned int64, but there's no such thing in PHP
     //the negative bounds must be written weirdly here due to weirdness in PHP parser
-    "J" => [Types::readSignedLongBE(...), Types::writeSignedLongBE(...), [-9223372036854775807-1, -1, 0, 1, 9223372036854775807]],
-    "P" => [Types::readSignedLongLE(...), Types::writeSignedLongLE(...), [-9223372036854775807-1, -1, 0, 1, 9223372036854775807]],
+    "J" => [BE::readSignedLong(...), BE::writeSignedLong(...), [-9223372036854775807-1, -1, 0, 1, 9223372036854775807]],
+    "P" => [LE::readSignedLong(...), LE::writeSignedLong(...), [-9223372036854775807-1, -1, 0, 1, 9223372036854775807]],
 
-    "G" => [Types::readFloatBE(...), Types::writeFloatBE(...), [-1.0, 0.0, 1.0]],
-    "g" => [Types::readFloatLE(...), Types::writeFloatLE(...), [-1.0, 0.0, 1.0]],
+    "G" => [BE::readFloat(...), BE::writeFloat(...), [-1.0, 0.0, 1.0]],
+    "g" => [LE::readFloat(...), LE::writeFloat(...), [-1.0, 0.0, 1.0]],
 
-    "E" => [Types::readDoubleBE(...), Types::writeDoubleBE(...), [-1.0, 0.0, 1.0]],
-    "e" => [Types::readDoubleLE(...), Types::writeDoubleLE(...), [-1.0, 0.0, 1.0]],
+    "E" => [BE::readDouble(...), BE::writeDouble(...), [-1.0, 0.0, 1.0]],
+    "e" => [LE::readDouble(...), LE::writeDouble(...), [-1.0, 0.0, 1.0]],
 ];
 
 foreach($map as $packCode => [$readFunc, $writeFunc, $testValues]){

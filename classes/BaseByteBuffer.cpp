@@ -144,33 +144,30 @@ BYTE_BUFFER_METHOD(writeByteArray) {
 	}
 }
 
-#define GET_OFFSET(func_name, which_offset) BYTE_BUFFER_METHOD(func_name) { \
-	zend_parse_parameters_none_throw(); \
-	auto object = BYTE_BUFFER_THIS(); \
-	RETURN_LONG(object->which_offset); \
-}
-
-#define SET_OFFSET(func_name, which_offset) BYTE_BUFFER_METHOD(func_name) { \
-	zend_long offset; \
-\
-	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1) \
-		Z_PARAM_LONG(offset) \
-	ZEND_PARSE_PARAMETERS_END(); \
-\
-	auto object = BYTE_BUFFER_THIS(); \
-	if (offset < 0 || static_cast<size_t>(offset) > object->used) { \
-		zend_value_error("Offset must not be less than zero or greater than the buffer size"); \
-		return; \
+#define OFFSET_METHODS(func_name, which_offset) \
+	BYTE_BUFFER_METHOD(get##func_name) { \
+		zend_parse_parameters_none_throw(); \
+		auto object = BYTE_BUFFER_THIS(); \
+		RETURN_LONG(object->which_offset); \
 	} \
-\
-	object->which_offset = static_cast<size_t>(offset); \
-}
+	BYTE_BUFFER_METHOD(set##func_name) { \
+		zend_long offset; \
+	\
+		ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1) \
+			Z_PARAM_LONG(offset) \
+		ZEND_PARSE_PARAMETERS_END(); \
+	\
+		auto object = BYTE_BUFFER_THIS(); \
+		if (offset < 0 || static_cast<size_t>(offset) > object->used) { \
+			zend_value_error("Offset must not be less than zero or greater than the buffer size"); \
+			return; \
+		} \
+	\
+		object->which_offset = static_cast<size_t>(offset); \
+	}
 
-GET_OFFSET(getReadOffset, read_offset);
-GET_OFFSET(getWriteOffset, write_offset);
-
-SET_OFFSET(setReadOffset, read_offset);
-SET_OFFSET(setWriteOffset, write_offset);
+OFFSET_METHODS(ReadOffset, read_offset);
+OFFSET_METHODS(WriteOffset, write_offset);
 
 BYTE_BUFFER_METHOD(getUsedLength) {
 	zend_parse_parameters_none_throw();

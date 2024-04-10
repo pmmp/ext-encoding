@@ -189,7 +189,7 @@ static zend_function_entry varint_methods[] = {
 
 void init_class_Types(void) {
 	zend_class_entry ce;
-	ce.ce_flags |= ZEND_ACC_FINAL | ZEND_ACC_NO_DYNAMIC_PROPERTIES;
+	ce.ce_flags = ZEND_ACC_FINAL | ZEND_ACC_NO_DYNAMIC_PROPERTIES;
 
 	INIT_NS_CLASS_ENTRY(ce, "pmmp\\encoding", "Byte", byte_methods);
 	zend_register_internal_class(&ce);

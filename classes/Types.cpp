@@ -110,14 +110,26 @@ ZEND_NAMED_FUNCTION(pmmp_encoding_private_constructor) {
 	//NOOP
 }
 
+#if PHP_VERSION_ID >= 80400
 #define FIXED_TYPE_ENTRIES(zend_name, native_type, parse_parameters_wrapper, result_wrapper, arg_info_read, arg_info_write, byte_order) \
 	ZEND_RAW_FENTRY("read" zend_name, (zif_readType<native_type, (readFixedSizeType<native_type, byte_order>), result_wrapper>), arg_info_read, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC, NULL, NULL) \
 	ZEND_RAW_FENTRY("write" zend_name, (zif_writeType<native_type, parse_parameters_wrapper<native_type>, (writeFixedSizeType<native_type, byte_order>)>), arg_info_write, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC, NULL, NULL)
+#else
+#define FIXED_TYPE_ENTRIES(zend_name, native_type, parse_parameters_wrapper, result_wrapper, arg_info_read, arg_info_write, byte_order) \
+	ZEND_RAW_FENTRY("read" zend_name, (zif_readType<native_type, (readFixedSizeType<native_type, byte_order>), result_wrapper>), arg_info_read, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC) \
+	ZEND_RAW_FENTRY("write" zend_name, (zif_writeType<native_type, parse_parameters_wrapper<native_type>, (writeFixedSizeType<native_type, byte_order>)>), arg_info_write, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+#endif
 
 //triad can't used readFixedSizeType because it's not a power of 2 bytes
+#if PHP_VERSION_ID >= 80400
 #define TRIAD_ENTRIES(zend_name, native_type, byte_order) \
 	ZEND_RAW_FENTRY("read" zend_name, (zif_readType<native_type, readInt24<native_type, byte_order>, zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC, NULL, NULL) \
 	ZEND_RAW_FENTRY("write" zend_name, (zif_writeType<native_type, zend_parse_parameters_long_wrapper<native_type>, writeInt24<native_type, byte_order>>), arginfo_write_integer, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC, NULL, NULL)
+#else
+#define TRIAD_ENTRIES(zend_name, native_type, byte_order) \
+	ZEND_RAW_FENTRY("read" zend_name, (zif_readType<native_type, readInt24<native_type, byte_order>, zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC) \
+	ZEND_RAW_FENTRY("write" zend_name, (zif_writeType<native_type, zend_parse_parameters_long_wrapper<native_type>, writeInt24<native_type, byte_order>>), arginfo_write_integer, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+#endif
 
 #define LONG_ENTRIES(zend_name, unsigned_native, signed_native, byte_order) \
 	FIXED_TYPE_ENTRIES("Unsigned" zend_name, unsigned_native, zend_parse_parameters_long_wrapper, zval_long_wrapper, arginfo_read_integer, arginfo_write_integer, byte_order) \
@@ -126,21 +138,39 @@ ZEND_NAMED_FUNCTION(pmmp_encoding_private_constructor) {
 #define FLOAT_ENTRIES(zend_name, native_type, byte_order) \
 	FIXED_TYPE_ENTRIES(zend_name, native_type, zend_parse_parameters_double_wrapper, zval_double_wrapper, arginfo_read_float, arginfo_write_float, byte_order)
 
+#if PHP_VERSION_ID >= 80400
 #define READ_VARINT_FENTRY(size_name, unsigned_type, signed_type) \
 	ZEND_RAW_FENTRY("readUnsigned" size_name, (zif_readType<unsigned_type, (readUnsignedVarInt<unsigned_type>), zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC, NULL, NULL) \
 	ZEND_RAW_FENTRY("readSigned" size_name, (zif_readType<signed_type, (readSignedVarInt<unsigned_type, signed_type>), zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC, NULL, NULL)
+#else
+#define READ_VARINT_FENTRY(size_name, unsigned_type, signed_type) \
+	ZEND_RAW_FENTRY("readUnsigned" size_name, (zif_readType<unsigned_type, (readUnsignedVarInt<unsigned_type>), zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC) \
+	ZEND_RAW_FENTRY("readSigned" size_name, (zif_readType<signed_type, (readSignedVarInt<unsigned_type, signed_type>), zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+#endif
 
+#if PHP_VERSION_ID >= 80400
 #define WRITE_VARINT_FENTRY(size_name, unsigned_type, signed_type) \
 	ZEND_RAW_FENTRY("writeUnsigned" size_name, (zif_writeType<unsigned_type, zend_parse_parameters_long_wrapper<unsigned_type>, (writeUnsignedVarInt<unsigned_type>)>), arginfo_write_integer, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC, NULL, NULL) \
 	ZEND_RAW_FENTRY("writeSigned" size_name, (zif_writeType<signed_type, zend_parse_parameters_long_wrapper<signed_type>, (writeSignedVarInt<unsigned_type, signed_type>)>), arginfo_write_integer, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC, NULL, NULL)
+#else
+#define WRITE_VARINT_FENTRY(size_name, unsigned_type, signed_type) \
+	ZEND_RAW_FENTRY("writeUnsigned" size_name, (zif_writeType<unsigned_type, zend_parse_parameters_long_wrapper<unsigned_type>, (writeUnsignedVarInt<unsigned_type>)>), arginfo_write_integer, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC) \
+	ZEND_RAW_FENTRY("writeSigned" size_name, (zif_writeType<signed_type, zend_parse_parameters_long_wrapper<signed_type>, (writeSignedVarInt<unsigned_type, signed_type>)>), arginfo_write_integer, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+#endif
 
 #define READ_WRITE_VARINT_ENTRY(zend_name, unsigned_type, signed_type) \
 	READ_VARINT_FENTRY(zend_name, unsigned_type, signed_type) \
 	WRITE_VARINT_FENTRY(zend_name, unsigned_type, signed_type)
 
+#if PHP_VERSION_ID >= 80400
 #define READ_WRITE_BYTE_ENTRY(zend_name, native_type) \
 	ZEND_RAW_FENTRY("read" zend_name, (zif_readType<native_type, readByte<native_type>, zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC, NULL, NULL) \
 	ZEND_RAW_FENTRY("write" zend_name, (zif_writeType<native_type, zend_parse_parameters_long_wrapper<native_type>, writeByte<native_type>>), arginfo_write_integer, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC, NULL, NULL)
+#else
+#define READ_WRITE_BYTE_ENTRY(zend_name, native_type) \
+	ZEND_RAW_FENTRY("read" zend_name, (zif_readType<native_type, readByte<native_type>, zval_long_wrapper>), arginfo_read_integer, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC) \
+	ZEND_RAW_FENTRY("write" zend_name, (zif_writeType<native_type, zend_parse_parameters_long_wrapper<native_type>, writeByte<native_type>>), arginfo_write_integer, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+#endif
 
 #define ENDIAN_ENTRIES(enum_case) \
 	LONG_ENTRIES("Short", uint16_t, int16_t, enum_case) \

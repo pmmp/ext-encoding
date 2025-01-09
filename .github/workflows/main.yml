@@ -17,6 +17,7 @@ jobs:
           - 8.1.26
           - 8.2.13
           - 8.3.0
+          - 8.4.2
         valgrind: [0, 1]
         debug: [enable, disable]
         zts: [enable, disable]

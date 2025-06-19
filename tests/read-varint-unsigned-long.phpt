@@ -1,7 +1,7 @@
 --TEST--
 Test that reading 64-bit VarInt works fine.
 --DESCRIPTION--
-VarInt::readingUnsignedLong(ByteBuffer) processes up to 10 consecutive bytes until the last processed byte has an MSB (most significant bit).
+VarInt::readingUnsignedLong(ByteBuffer) processes up to 9 consecutive 7-bit bytes (a 63-bit integer) until the last processed byte has an MSB (most significant bit).
 This method unites the processed byte with the acumulator.
 Check that the method works correctly with bytes.
 --FILE--

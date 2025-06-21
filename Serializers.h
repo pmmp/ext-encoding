@@ -112,7 +112,7 @@ static inline bool readUnsignedVarInt(unsigned char* bytes, size_t used, size_t&
 		}
 
 		auto byte = bytes[offset++];
-		result |= (byte & VarIntConstants::VALUE_MASK) << shift;
+		result |= static_cast<TValue>(byte & VarIntConstants::VALUE_MASK) << shift;
 		if ((byte & VarIntConstants::MSB_MASK) == 0) {
 			return true;
 		}

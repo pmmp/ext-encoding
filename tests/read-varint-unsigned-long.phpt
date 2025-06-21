@@ -11,10 +11,23 @@ to be discarded. This test verifies the result of the fix.
 use pmmp\encoding\ByteBuffer;
 use pmmp\encoding\VarInt;
 
+//unsigned
 $buffer_2 = str_repeat("\x81", 8) . "\x01";
 $buf_2 = new ByteBuffer($buffer_2);
 var_dump(VarInt::readUnsignedLong($buf_2));
 
+//negative signed
+$buffer_3 = str_repeat("\x81", 8) . "\x01";
+$buf_3 = new ByteBuffer($buffer_3);
+var_dump(VarInt::readSignedLong($buf_3));
+
+//positive signed
+$buffer_3 = "\x80" . str_repeat("\x81", 7) . "\x01";
+$buf_3 = new ByteBuffer($buffer_3);
+var_dump(VarInt::readSignedLong($buf_3));
+
 ?>
 --EXPECT--
 int(72624976668147841)
+int(-36312488334073921)
+int(36312488334073920)

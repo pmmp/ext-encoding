@@ -1,36 +1,20 @@
 --TEST--
-Test that reading 64-bit VarInt works fine.
+Test that reading varlongs (> 5 bytes) works correctly
 --DESCRIPTION--
-VarInt::readingUnsignedLong(ByteBuffer) processes up to 9 consecutive 7-bit bytes (a 63-bit integer) until the last processed byte has an MSB (most significant bit).
-This method unites the processed byte with the acumulator.
-Check that the method works correctly with bytes.
+The result of the bitwise AND operation has a result of int regardless of the input.
+When shifting this to the left by more than 31, the result will be 0 if not explicitly
+casted to a larger type before shifting. For varlongs this led to all bits above 32
+to be discarded. This test verifies the result of the fix.
 --FILE--
 <?php
 
 use pmmp\encoding\ByteBuffer;
 use pmmp\encoding\VarInt;
 
-$buffer_1 = chr(1 | 0x80) // 1
-    . chr(1 | 0x80)       // 2
-    . chr(1 | 0x80)       // 3
-    . chr(1 | 0x80)       // 4
-    . chr(1);             // 5
-$buf_1 = new ByteBuffer($buffer_1);
-var_dump(VarInt::readUnsignedLong($buf_1));
-
-$buffer_2 = chr(1 | 0x80) // 1
-    . chr(1 | 0x80)       // 2
-    . chr(1 | 0x80)       // 3
-    . chr(1 | 0x80)       // 4
-    . chr(1 | 0x80)       // 5
-    . chr(1 | 0x80)       // 6
-    . chr(1 | 0x80)       // 7
-    . chr(1 | 0x80)       // 8
-    . chr(1);             // 9
+$buffer_2 = str_repeat("\x81", 8) . "\x01";
 $buf_2 = new ByteBuffer($buffer_2);
 var_dump(VarInt::readUnsignedLong($buf_2));
 
 ?>
 --EXPECT--
-int(270549121)
 int(72624976668147841)

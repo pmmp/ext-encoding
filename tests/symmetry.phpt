@@ -36,15 +36,9 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (65534): match = YES
 (65535): match = YES
---- big endian UNSIGNED_SHORT array symmetry ---
-(Array
-(
-    [0] => 0
-    [1] => 1
-    [2] => 65534
-    [3] => 65535
-)
-): match = YES
+--- big endian UNSIGNED_SHORT array symmetry: match = YES
+--- big endian UNSIGNED_SHORT array vs single symmetry: match = YES
+--- big endian UNSIGNED_SHORT single vs array symmetry: match = YES
 ########## END TEST big endian UNSIGNED_SHORT ##########
 
 ########## TEST little endian UNSIGNED_SHORT ##########
@@ -53,15 +47,9 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (65534): match = YES
 (65535): match = YES
---- little endian UNSIGNED_SHORT array symmetry ---
-(Array
-(
-    [0] => 0
-    [1] => 1
-    [2] => 65534
-    [3] => 65535
-)
-): match = YES
+--- little endian UNSIGNED_SHORT array symmetry: match = YES
+--- little endian UNSIGNED_SHORT array vs single symmetry: match = YES
+--- little endian UNSIGNED_SHORT single vs array symmetry: match = YES
 ########## END TEST little endian UNSIGNED_SHORT ##########
 
 ########## TEST big endian SIGNED_SHORT ##########
@@ -73,18 +61,9 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (32766): match = YES
 (32767): match = YES
---- big endian SIGNED_SHORT array symmetry ---
-(Array
-(
-    [0] => -32768
-    [1] => -32767
-    [2] => -1
-    [3] => 0
-    [4] => 1
-    [5] => 32766
-    [6] => 32767
-)
-): match = YES
+--- big endian SIGNED_SHORT array symmetry: match = YES
+--- big endian SIGNED_SHORT array vs single symmetry: match = YES
+--- big endian SIGNED_SHORT single vs array symmetry: match = YES
 ########## END TEST big endian SIGNED_SHORT ##########
 
 ########## TEST little endian SIGNED_SHORT ##########
@@ -96,18 +75,9 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (32766): match = YES
 (32767): match = YES
---- little endian SIGNED_SHORT array symmetry ---
-(Array
-(
-    [0] => -32768
-    [1] => -32767
-    [2] => -1
-    [3] => 0
-    [4] => 1
-    [5] => 32766
-    [6] => 32767
-)
-): match = YES
+--- little endian SIGNED_SHORT array symmetry: match = YES
+--- little endian SIGNED_SHORT array vs single symmetry: match = YES
+--- little endian SIGNED_SHORT single vs array symmetry: match = YES
 ########## END TEST little endian SIGNED_SHORT ##########
 
 ########## TEST big endian UNSIGNED_TRIAD ##########
@@ -116,15 +86,9 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (16777214): match = YES
 (16777215): match = YES
---- big endian UNSIGNED_TRIAD array symmetry ---
-(Array
-(
-    [0] => 0
-    [1] => 1
-    [2] => 16777214
-    [3] => 16777215
-)
-): match = YES
+--- big endian UNSIGNED_TRIAD array symmetry: match = YES
+--- big endian UNSIGNED_TRIAD array vs single symmetry: match = YES
+--- big endian UNSIGNED_TRIAD single vs array symmetry: match = YES
 ########## END TEST big endian UNSIGNED_TRIAD ##########
 
 ########## TEST little endian UNSIGNED_TRIAD ##########
@@ -133,15 +97,9 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (16777214): match = YES
 (16777215): match = YES
---- little endian UNSIGNED_TRIAD array symmetry ---
-(Array
-(
-    [0] => 0
-    [1] => 1
-    [2] => 16777214
-    [3] => 16777215
-)
-): match = YES
+--- little endian UNSIGNED_TRIAD array symmetry: match = YES
+--- little endian UNSIGNED_TRIAD array vs single symmetry: match = YES
+--- little endian UNSIGNED_TRIAD single vs array symmetry: match = YES
 ########## END TEST little endian UNSIGNED_TRIAD ##########
 
 ########## TEST big endian SIGNED_TRIAD ##########
@@ -153,18 +111,9 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (8388606): match = YES
 (8388607): match = YES
---- big endian SIGNED_TRIAD array symmetry ---
-(Array
-(
-    [0] => -8388608
-    [1] => -8388607
-    [2] => -1
-    [3] => 0
-    [4] => 1
-    [5] => 8388606
-    [6] => 8388607
-)
-): match = YES
+--- big endian SIGNED_TRIAD array symmetry: match = YES
+--- big endian SIGNED_TRIAD array vs single symmetry: match = YES
+--- big endian SIGNED_TRIAD single vs array symmetry: match = YES
 ########## END TEST big endian SIGNED_TRIAD ##########
 
 ########## TEST little endian SIGNED_TRIAD ##########
@@ -176,18 +125,9 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (8388606): match = YES
 (8388607): match = YES
---- little endian SIGNED_TRIAD array symmetry ---
-(Array
-(
-    [0] => -8388608
-    [1] => -8388607
-    [2] => -1
-    [3] => 0
-    [4] => 1
-    [5] => 8388606
-    [6] => 8388607
-)
-): match = YES
+--- little endian SIGNED_TRIAD array symmetry: match = YES
+--- little endian SIGNED_TRIAD array vs single symmetry: match = YES
+--- little endian SIGNED_TRIAD single vs array symmetry: match = YES
 ########## END TEST little endian SIGNED_TRIAD ##########
 
 ########## TEST big endian UNSIGNED_INT ##########
@@ -196,15 +136,9 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (4294967294): match = YES
 (4294967295): match = YES
---- big endian UNSIGNED_INT array symmetry ---
-(Array
-(
-    [0] => 0
-    [1] => 1
-    [2] => 4294967294
-    [3] => 4294967295
-)
-): match = YES
+--- big endian UNSIGNED_INT array symmetry: match = YES
+--- big endian UNSIGNED_INT array vs single symmetry: match = YES
+--- big endian UNSIGNED_INT single vs array symmetry: match = YES
 ########## END TEST big endian UNSIGNED_INT ##########
 
 ########## TEST little endian UNSIGNED_INT ##########
@@ -213,15 +147,9 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (4294967294): match = YES
 (4294967295): match = YES
---- little endian UNSIGNED_INT array symmetry ---
-(Array
-(
-    [0] => 0
-    [1] => 1
-    [2] => 4294967294
-    [3] => 4294967295
-)
-): match = YES
+--- little endian UNSIGNED_INT array symmetry: match = YES
+--- little endian UNSIGNED_INT array vs single symmetry: match = YES
+--- little endian UNSIGNED_INT single vs array symmetry: match = YES
 ########## END TEST little endian UNSIGNED_INT ##########
 
 ########## TEST big endian SIGNED_INT ##########
@@ -233,18 +161,9 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (2147483646): match = YES
 (2147483647): match = YES
---- big endian SIGNED_INT array symmetry ---
-(Array
-(
-    [0] => -2147483648
-    [1] => -2147483647
-    [2] => -1
-    [3] => 0
-    [4] => 1
-    [5] => 2147483646
-    [6] => 2147483647
-)
-): match = YES
+--- big endian SIGNED_INT array symmetry: match = YES
+--- big endian SIGNED_INT array vs single symmetry: match = YES
+--- big endian SIGNED_INT single vs array symmetry: match = YES
 ########## END TEST big endian SIGNED_INT ##########
 
 ########## TEST little endian SIGNED_INT ##########
@@ -256,18 +175,9 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (2147483646): match = YES
 (2147483647): match = YES
---- little endian SIGNED_INT array symmetry ---
-(Array
-(
-    [0] => -2147483648
-    [1] => -2147483647
-    [2] => -1
-    [3] => 0
-    [4] => 1
-    [5] => 2147483646
-    [6] => 2147483647
-)
-): match = YES
+--- little endian SIGNED_INT array symmetry: match = YES
+--- little endian SIGNED_INT array vs single symmetry: match = YES
+--- little endian SIGNED_INT single vs array symmetry: match = YES
 ########## END TEST little endian SIGNED_INT ##########
 
 ########## TEST big endian SIGNED_LONG ##########
@@ -279,18 +189,9 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (9223372036854775806): match = YES
 (9223372036854775807): match = YES
---- big endian SIGNED_LONG array symmetry ---
-(Array
-(
-    [0] => -9223372036854775808
-    [1] => -9223372036854775807
-    [2] => -1
-    [3] => 0
-    [4] => 1
-    [5] => 9223372036854775806
-    [6] => 9223372036854775807
-)
-): match = YES
+--- big endian SIGNED_LONG array symmetry: match = YES
+--- big endian SIGNED_LONG array vs single symmetry: match = YES
+--- big endian SIGNED_LONG single vs array symmetry: match = YES
 ########## END TEST big endian SIGNED_LONG ##########
 
 ########## TEST little endian SIGNED_LONG ##########
@@ -302,18 +203,9 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (9223372036854775806): match = YES
 (9223372036854775807): match = YES
---- little endian SIGNED_LONG array symmetry ---
-(Array
-(
-    [0] => -9223372036854775808
-    [1] => -9223372036854775807
-    [2] => -1
-    [3] => 0
-    [4] => 1
-    [5] => 9223372036854775806
-    [6] => 9223372036854775807
-)
-): match = YES
+--- little endian SIGNED_LONG array symmetry: match = YES
+--- little endian SIGNED_LONG array vs single symmetry: match = YES
+--- little endian SIGNED_LONG single vs array symmetry: match = YES
 ########## END TEST little endian SIGNED_LONG ##########
 
 --- unsigned byte single read symmetry ---
@@ -337,16 +229,9 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (0): match = YES
 (1): match = YES
 (1.5): match = YES
---- big endian FLOAT array symmetry ---
-(Array
-(
-    [0] => -1.5
-    [1] => -1
-    [2] => 0
-    [3] => 1
-    [4] => 1.5
-)
-): match = YES
+--- big endian FLOAT array symmetry: match = YES
+--- big endian FLOAT array vs single symmetry: match = YES
+--- big endian FLOAT single vs array symmetry: match = YES
 ########## END TEST big endian FLOAT ##########
 
 ########## TEST little endian FLOAT ##########
@@ -356,16 +241,9 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (0): match = YES
 (1): match = YES
 (1.5): match = YES
---- little endian FLOAT array symmetry ---
-(Array
-(
-    [0] => -1.5
-    [1] => -1
-    [2] => 0
-    [3] => 1
-    [4] => 1.5
-)
-): match = YES
+--- little endian FLOAT array symmetry: match = YES
+--- little endian FLOAT array vs single symmetry: match = YES
+--- little endian FLOAT single vs array symmetry: match = YES
 ########## END TEST little endian FLOAT ##########
 
 ########## TEST big endian DOUBLE ##########
@@ -375,16 +253,9 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (0): match = YES
 (1): match = YES
 (1.5): match = YES
---- big endian DOUBLE array symmetry ---
-(Array
-(
-    [0] => -1.5
-    [1] => -1
-    [2] => 0
-    [3] => 1
-    [4] => 1.5
-)
-): match = YES
+--- big endian DOUBLE array symmetry: match = YES
+--- big endian DOUBLE array vs single symmetry: match = YES
+--- big endian DOUBLE single vs array symmetry: match = YES
 ########## END TEST big endian DOUBLE ##########
 
 ########## TEST little endian DOUBLE ##########
@@ -394,16 +265,9 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (0): match = YES
 (1): match = YES
 (1.5): match = YES
---- little endian DOUBLE array symmetry ---
-(Array
-(
-    [0] => -1.5
-    [1] => -1
-    [2] => 0
-    [3] => 1
-    [4] => 1.5
-)
-): match = YES
+--- little endian DOUBLE array symmetry: match = YES
+--- little endian DOUBLE array vs single symmetry: match = YES
+--- little endian DOUBLE single vs array symmetry: match = YES
 ########## END TEST little endian DOUBLE ##########
 
 ########## TEST varint ##########
@@ -412,15 +276,9 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (4294967294): match = YES
 (4294967295): match = YES
---- varint array symmetry ---
-(Array
-(
-    [0] => 0
-    [1] => 1
-    [2] => 4294967294
-    [3] => 4294967295
-)
-): match = YES
+--- varint array symmetry: match = YES
+--- varint array vs single symmetry: match = YES
+--- varint single vs array symmetry: match = YES
 ########## END TEST varint ##########
 
 ########## TEST varint zigzag ##########
@@ -432,18 +290,9 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (2147483646): match = YES
 (2147483647): match = YES
---- varint zigzag array symmetry ---
-(Array
-(
-    [0] => -2147483648
-    [1] => -2147483647
-    [2] => -1
-    [3] => 0
-    [4] => 1
-    [5] => 2147483646
-    [6] => 2147483647
-)
-): match = YES
+--- varint zigzag array symmetry: match = YES
+--- varint zigzag array vs single symmetry: match = YES
+--- varint zigzag single vs array symmetry: match = YES
 ########## END TEST varint zigzag ##########
 
 ########## TEST varlong ##########
@@ -455,18 +304,9 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (9223372036854775806): match = YES
 (9223372036854775807): match = YES
---- varlong array symmetry ---
-(Array
-(
-    [0] => -9223372036854775808
-    [1] => -9223372036854775807
-    [2] => -1
-    [3] => 0
-    [4] => 1
-    [5] => 9223372036854775806
-    [6] => 9223372036854775807
-)
-): match = YES
+--- varlong array symmetry: match = YES
+--- varlong array vs single symmetry: match = YES
+--- varlong single vs array symmetry: match = YES
 ########## END TEST varlong ##########
 
 ########## TEST varlong zigzag ##########
@@ -478,16 +318,7 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (9223372036854775806): match = YES
 (9223372036854775807): match = YES
---- varlong zigzag array symmetry ---
-(Array
-(
-    [0] => -9223372036854775808
-    [1] => -9223372036854775807
-    [2] => -1
-    [3] => 0
-    [4] => 1
-    [5] => 9223372036854775806
-    [6] => 9223372036854775807
-)
-): match = YES
+--- varlong zigzag array symmetry: match = YES
+--- varlong zigzag array vs single symmetry: match = YES
+--- varlong zigzag single vs array symmetry: match = YES
 ########## END TEST varlong zigzag ##########

@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: 8ef961e70f1f9bef0696d59854ae9eff91e8823a */
+ * Stub hash: f10e34840268133620b2fd4940a64247fe8816ac */
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_class_pmmp_encoding_ByteBufferWriter___construct, 0, 0, 0)
 	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, prefix, IS_STRING, 0, "\"\"")
@@ -77,7 +77,12 @@ static zend_class_entry *register_class_pmmp_encoding_ByteBufferWriter(void)
 	zend_class_entry ce, *class_entry;
 
 	INIT_NS_CLASS_ENTRY(ce, "pmmp\\encoding", "ByteBufferWriter", class_pmmp_encoding_ByteBufferWriter_methods);
+#if (PHP_VERSION_ID >= 80400)
 	class_entry = zend_register_internal_class_with_flags(&ce, NULL, ZEND_ACC_FINAL|ZEND_ACC_NO_DYNAMIC_PROPERTIES);
+#else
+	class_entry = zend_register_internal_class_ex(&ce, NULL);
+	class_entry->ce_flags |= ZEND_ACC_FINAL|ZEND_ACC_NO_DYNAMIC_PROPERTIES;
+#endif
 
 	return class_entry;
 }

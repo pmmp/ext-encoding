@@ -81,7 +81,8 @@ WRITER_METHOD(__construct) {
 	if (buffer == NULL) {
 		buffer = zend_empty_string;
 	}
-	//read offset is placed at the start, and write offset at the end (to mirror PM BinaryStream behaviour)
+
+	//write offset is placed at the end, as if the given string was written using writeByteArray()
 	writer_init_properties(object, buffer, ZSTR_LEN(buffer), ZSTR_LEN(buffer));
 }
 

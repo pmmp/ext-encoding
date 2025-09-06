@@ -75,10 +75,6 @@ READER_METHOD(__construct) {
 		zend_string_release_ex(object->buffer, 0);
 	}
 
-	if (buffer == NULL) {
-		buffer = zend_empty_string;
-	}
-	//read offset is placed at the start, and write offset at the end (to mirror PM BinaryStream behaviour)
 	reader_init_properties(object, buffer, 0);
 }
 

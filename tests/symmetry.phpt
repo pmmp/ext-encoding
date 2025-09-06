@@ -34,10 +34,7 @@ foreach(FloatSamples::cases() as $case){
 
 testFullSymmetry("varint", EndianInts::UNSIGNED_INT->getSamples(), VarInt::readUnsignedInt(...), VarInt::writeUnsignedInt(...), VarInt::readUnsignedIntArray(...), VarInt::writeUnsignedIntArray(...));
 testFullSymmetry("varint zigzag", EndianInts::SIGNED_INT->getSamples(), VarInt::readSignedInt(...), VarInt::writeSignedInt(...), VarInt::readSignedIntArray(...), VarInt::writeSignedIntArray(...));
-
-//both of these use SIGNED_LONG because PHP has no unsigned long type
-//the sample values are the same, however the native encoding is in fact different
-testFullSymmetry("varlong", EndianInts::SIGNED_LONG->getSamples(), VarInt::readUnsignedLong(...), VarInt::writeUnsignedLong(...), VarInt::readUnsignedLongArray(...), VarInt::writeUnsignedLongArray(...));
+testFullSymmetry("varlong", EndianInts::UNSIGNED_LONG->getSamples(), VarInt::readUnsignedLong(...), VarInt::writeUnsignedLong(...), VarInt::readUnsignedLongArray(...), VarInt::writeUnsignedLongArray(...));
 testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt::readSignedLong(...), VarInt::writeSignedLong(...), VarInt::readSignedLongArray(...), VarInt::writeSignedLongArray(...));
 ?>
 --EXPECT--
@@ -210,6 +207,34 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 --- array vs single symmetry: match = YES
 --- single vs array symmetry: match = YES
 ########## END TEST little endian SIGNED_INT ##########
+
+########## TEST big endian UNSIGNED_LONG ##########
+--- single read symmetry ---
+(-9223372036854775808): match = YES
+(-9223372036854775807): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(9223372036854775806): match = YES
+(9223372036854775807): match = YES
+--- array symmetry: match = YES
+--- array vs single symmetry: match = YES
+--- single vs array symmetry: match = YES
+########## END TEST big endian UNSIGNED_LONG ##########
+
+########## TEST little endian UNSIGNED_LONG ##########
+--- single read symmetry ---
+(-9223372036854775808): match = YES
+(-9223372036854775807): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(9223372036854775806): match = YES
+(9223372036854775807): match = YES
+--- array symmetry: match = YES
+--- array vs single symmetry: match = YES
+--- single vs array symmetry: match = YES
+########## END TEST little endian UNSIGNED_LONG ##########
 
 ########## TEST big endian SIGNED_LONG ##########
 --- single read symmetry ---

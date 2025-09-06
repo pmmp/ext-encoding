@@ -3,6 +3,6 @@ ARG_ENABLE('encoding', 'encoding support', 'no');
 if (PHP_ENCODING != 'no') {
 	AC_DEFINE('HAVE_ENCODING', 1, 'encoding support enabled');
 
-	EXTENSION('encoding', 'encoding.cpp', null, '/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1 /permissive-');
+	EXTENSION('encoding', 'encoding.cpp', null, '/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1 /permissive- /std:c++20');
 	ADD_SOURCES(configure_module_dirname + '/classes', 'ByteBufferReader.cpp ByteBufferWriter.cpp Types.cpp', 'encoding');
 }

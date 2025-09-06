@@ -358,7 +358,8 @@ ZEND_NAMED_FUNCTION(pmmp_encoding_private_constructor) {
 	FIXED_INT_ENTRIES("Short", uint16_t, int16_t, enum_case) \
 	FIXED_INT_ENTRIES("Int", uint32_t, int32_t, enum_case) \
 	\
-	FIXED_INT_BASE_ENTRIES("SignedLong", int64_t, enum_case) \
+	/* Technically, PHP doesn't support unsigned longs in userland, however the functions are still useful for making code intent obvious */ \
+	FIXED_INT_ENTRIES("Long", uint64_t, int64_t, enum_case) \
 	\
 	FLOAT_ENTRIES("Float", float, enum_case) \
 	FLOAT_ENTRIES("Double", double, enum_case) \

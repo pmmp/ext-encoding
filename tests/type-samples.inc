@@ -12,7 +12,7 @@ enum EndianInts{
 	case SIGNED_TRIAD;
 	case UNSIGNED_INT;
 	case SIGNED_INT;
-	//no unsigned long in PHP
+	case UNSIGNED_LONG;
 	case SIGNED_LONG;
 
 	public function getMin() : int{
@@ -23,6 +23,8 @@ enum EndianInts{
 			self::SIGNED_SHORT => -32768,
 			self::SIGNED_TRIAD => -8388608,
 			self::SIGNED_INT => -2147483648,
+
+			self::UNSIGNED_LONG, //PHP doesn't have an unsigned long type
 			self::SIGNED_LONG => -9223372036854775807 - 1, //PHP parser weirdness
 		};
 	}
@@ -35,6 +37,8 @@ enum EndianInts{
 			self::SIGNED_SHORT => 32767,
 			self::SIGNED_TRIAD => 8388607,
 			self::SIGNED_INT => 2147483647,
+
+			self::UNSIGNED_LONG, //PHP doesn't have an unsigned long type
 			self::SIGNED_LONG => 9223372036854775807,
 		};
 	}
@@ -61,6 +65,7 @@ enum EndianInts{
 			self::SIGNED_TRIAD => [$class::readSignedTriad(...), $class::writeSignedTriad(...), $class::readSignedTriadArray(...), $class::writeSignedTriadArray(...)],
 			self::UNSIGNED_INT => [$class::readUnsignedInt(...), $class::writeUnsignedInt(...), $class::readUnsignedIntArray(...), $class::writeUnsignedIntArray(...)],
 			self::SIGNED_INT => [$class::readSignedInt(...), $class::writeSignedInt(...), $class::readSignedIntArray(...), $class::writeSignedIntArray(...)],
+			self::UNSIGNED_LONG => [$class::readUnsignedLong(...), $class::writeUnsignedLong(...), $class::readUnsignedLongArray(...), $class::writeUnsignedLongArray(...)],
 			self::SIGNED_LONG => [$class::readSignedLong(...), $class::writeSignedLong(...), $class::readSignedLongArray(...), $class::writeSignedLongArray(...)],
 		};
 	}

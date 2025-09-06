@@ -2,36 +2,37 @@ extern "C" {
 #include "php.h"
 #include "Zend/zend_errors.h"
 }
-#include "ByteBuffer.h"
+#include "ByteBufferReader.h"
+#include "ByteBufferWriter.h"
 #include "DataDecodeException.h"
 #include "../Serializers.h"
 #include <vector>
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_read_integer, 0, 1, IS_LONG, 0)
-ZEND_ARG_OBJ_INFO(0, buffer, pmmp\\encoding\\ByteBuffer, 0)
+ZEND_ARG_OBJ_INFO(0, buffer, pmmp\\encoding\\ByteBufferReader, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_write_integer, 0, 2, IS_VOID, 0)
-ZEND_ARG_OBJ_INFO(0, buffer, pmmp\\encoding\\ByteBuffer, 0)
+ZEND_ARG_OBJ_INFO(0, buffer, pmmp\\encoding\\ByteBufferWriter, 0)
 ZEND_ARG_TYPE_INFO(0, value, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_read_float, 0, 1, IS_DOUBLE, 0)
-ZEND_ARG_OBJ_INFO(0, buffer, pmmp\\encoding\\ByteBuffer, 0)
+ZEND_ARG_OBJ_INFO(0, buffer, pmmp\\encoding\\ByteBufferReader, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_write_float, 0, 2, IS_VOID, 0)
-ZEND_ARG_OBJ_INFO(0, buffer, pmmp\\encoding\\ByteBuffer, 0)
+ZEND_ARG_OBJ_INFO(0, buffer, pmmp\\encoding\\ByteBufferWriter, 0)
 ZEND_ARG_TYPE_INFO(0, value, IS_DOUBLE, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_read_array, 0, 2, IS_ARRAY, 0)
-ZEND_ARG_OBJ_INFO(0, buffer, pmmp\\encoding\\ByteBuffer, 0)
+ZEND_ARG_OBJ_INFO(0, buffer, pmmp\\encoding\\ByteBufferReader, 0)
 ZEND_ARG_TYPE_INFO(0, count, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_write_array, 0, 2, IS_VOID, 0)
-ZEND_ARG_OBJ_INFO(0, buffer, pmmp\\encoding\\ByteBuffer, 0)
+ZEND_ARG_OBJ_INFO(0, buffer, pmmp\\encoding\\ByteBufferWriter, 0)
 ZEND_ARG_ARRAY_INFO(0, values, 0)
 ZEND_END_ARG_INFO()
 
@@ -72,17 +73,17 @@ using returnResultFunc_t = void(*)(zval*, TValue);
 template<typename TValue, readTypeFunc_t<TValue> readTypeFunc, returnResultFunc_t<TValue> assignResult>
 void ZEND_FASTCALL zif_readType(INTERNAL_FUNCTION_PARAMETERS) {
 	zval* object_zv;
-	byte_buffer_zend_object* object;
+	byte_buffer_reader_zend_object* object;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
-		Z_PARAM_OBJECT_OF_CLASS_EX(object_zv, byte_buffer_ce, 0, 0)
+		Z_PARAM_OBJECT_OF_CLASS_EX(object_zv, byte_buffer_reader_ce, 0, 0)
 	ZEND_PARSE_PARAMETERS_END_EX(return);
 
-	object = BYTE_BUFFER_FROM_ZVAL(object_zv);
+	object = READER_FROM_ZVAL(object_zv);
 
 	TValue result;
 	auto bytes = reinterpret_cast<unsigned char*>(ZSTR_VAL(object->buffer));
-	if (readTypeFunc(bytes, object->used, object->read_offset, result)) {
+	if (readTypeFunc(bytes, ZSTR_LEN(object->buffer), object->offset, result)) {
 		assignResult(return_value, result);
 	}
 }
@@ -94,10 +95,10 @@ template<typename TValue, readTypeArrayFunc_t<TValue> readTypeArray, returnResul
 void ZEND_FASTCALL zif_readTypeArray(INTERNAL_FUNCTION_PARAMETERS) {
 	zval* object_zv;
 	zend_long zcount;
-	byte_buffer_zend_object* object;
+	byte_buffer_reader_zend_object* object;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 2, 2)
-		Z_PARAM_OBJECT_OF_CLASS_EX(object_zv, byte_buffer_ce, 0, 0)
+		Z_PARAM_OBJECT_OF_CLASS_EX(object_zv, byte_buffer_reader_ce, 0, 0)
 		Z_PARAM_LONG(zcount)
 	ZEND_PARSE_PARAMETERS_END_EX(return);
 
@@ -107,55 +108,55 @@ void ZEND_FASTCALL zif_readTypeArray(INTERNAL_FUNCTION_PARAMETERS) {
 	}
 	size_t count = static_cast<size_t>(zcount);
 
-	object = BYTE_BUFFER_FROM_ZVAL(object_zv);
+	object = READER_FROM_ZVAL(object_zv);
 
 	std::vector<TValue> resultArray;
 	auto bytes = reinterpret_cast<unsigned char*>(ZSTR_VAL(object->buffer));
-	if (readTypeArray(bytes, object->used, object->read_offset, count, resultArray)) {
+	if (readTypeArray(bytes, ZSTR_LEN(object->buffer), object->offset, count, resultArray)) {
 		returnResult(return_value, resultArray);
 	}
 }
 
 template<typename TValue>
-static bool zend_parse_parameters_long_wrapper(zend_execute_data* execute_data, byte_buffer_zend_object*& object, TValue& value) {
+static bool zend_parse_parameters_long_wrapper(zend_execute_data* execute_data, byte_buffer_writer_zend_object*& object, TValue& value) {
 	zval* object_zv;
 	zend_long actualValue;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 2, 2)
-		Z_PARAM_OBJECT_OF_CLASS_EX(object_zv, byte_buffer_ce, 0, 0)
+		Z_PARAM_OBJECT_OF_CLASS_EX(object_zv, byte_buffer_writer_ce, 0, 0)
 		Z_PARAM_LONG(actualValue)
 	ZEND_PARSE_PARAMETERS_END_EX(return false);
 
-	object = BYTE_BUFFER_FROM_ZVAL(object_zv);
+	object = WRITER_FROM_ZVAL(object_zv);
 	value = static_cast<TValue>(actualValue);
 
 	return true;
 }
 
 template<typename TValue>
-static bool zend_parse_parameters_double_wrapper(zend_execute_data* execute_data, byte_buffer_zend_object*& object, TValue& value) {
+static bool zend_parse_parameters_double_wrapper(zend_execute_data* execute_data, byte_buffer_writer_zend_object*& object, TValue& value) {
 	zval* object_zv;
 	double actualValue;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 2, 2)
-		Z_PARAM_OBJECT_OF_CLASS_EX(object_zv, byte_buffer_ce, 0, 0)
+		Z_PARAM_OBJECT_OF_CLASS_EX(object_zv, byte_buffer_writer_ce, 0, 0)
 		Z_PARAM_DOUBLE(actualValue)
 	ZEND_PARSE_PARAMETERS_END_EX(return false);
 
-	object = BYTE_BUFFER_FROM_ZVAL(object_zv);
+	object = WRITER_FROM_ZVAL(object_zv);
 	value = static_cast<TValue>(actualValue);
 
 	return true;
 }
 
 template<typename TValue>
-static bool zend_parse_parameters_double_array_wrapper(zend_execute_data* execute_data, byte_buffer_zend_object*& object, std::vector<TValue>& valueArray) {
+static bool zend_parse_parameters_double_array_wrapper(zend_execute_data* execute_data, byte_buffer_writer_zend_object*& object, std::vector<TValue>& valueArray) {
 	zval* objectZv;
 	HashTable* valueArrayHt;
 	zval* elementZv;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 2, 2)
-		Z_PARAM_OBJECT_OF_CLASS_EX(objectZv, byte_buffer_ce, 0, 0)
+		Z_PARAM_OBJECT_OF_CLASS_EX(objectZv, byte_buffer_writer_ce, 0, 0)
 		Z_PARAM_ARRAY_HT(valueArrayHt)
 		ZEND_PARSE_PARAMETERS_END_EX(return false);
 
@@ -169,18 +170,18 @@ static bool zend_parse_parameters_double_array_wrapper(zend_execute_data* execut
 		valueArray.push_back(value);
 	} ZEND_HASH_FOREACH_END();
 
-	object = BYTE_BUFFER_FROM_ZVAL(objectZv);
+	object = WRITER_FROM_ZVAL(objectZv);
 	return true;
 }
 
 template<typename TValue>
-static bool zend_parse_parameters_long_array_wrapper(zend_execute_data* execute_data, byte_buffer_zend_object*& object, std::vector<TValue>& valueArray) {
+static bool zend_parse_parameters_long_array_wrapper(zend_execute_data* execute_data, byte_buffer_writer_zend_object*& object, std::vector<TValue>& valueArray) {
 	zval* objectZv;
 	HashTable* valueArrayHt;
 	zval* elementZv;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 2, 2)
-		Z_PARAM_OBJECT_OF_CLASS_EX(objectZv, byte_buffer_ce, 0, 0)
+		Z_PARAM_OBJECT_OF_CLASS_EX(objectZv, byte_buffer_writer_ce, 0, 0)
 		Z_PARAM_ARRAY_HT(valueArrayHt)
 		ZEND_PARSE_PARAMETERS_END_EX(return false);
 
@@ -194,12 +195,12 @@ static bool zend_parse_parameters_long_array_wrapper(zend_execute_data* execute_
 		valueArray.push_back(value);
 	} ZEND_HASH_FOREACH_END();
 
-	object = BYTE_BUFFER_FROM_ZVAL(objectZv);
+	object = WRITER_FROM_ZVAL(objectZv);
 	return true;
 }
 
 template<typename TValue>
-using parseParametersFunc_t = bool (*)(zend_execute_data* execute_data, byte_buffer_zend_object*& object, TValue& value);
+using parseParametersFunc_t = bool (*)(zend_execute_data* execute_data, byte_buffer_writer_zend_object*& object, TValue& value);
 
 template<typename TValue>
 using writeTypeFunc_t = void (*)(zend_string*& buffer, size_t& offset, TValue value);
@@ -207,16 +208,16 @@ using writeTypeFunc_t = void (*)(zend_string*& buffer, size_t& offset, TValue va
 template<typename TValue, parseParametersFunc_t<TValue> parseParametersFunc, writeTypeFunc_t<TValue> writeTypeFunc>
 void ZEND_FASTCALL zif_writeType(INTERNAL_FUNCTION_PARAMETERS) {
 	TValue value;
-	byte_buffer_zend_object* object;
+	byte_buffer_writer_zend_object* object;
 
 	//offsets beyond the end of the buffer are allowed, and result in automatic buffer extension
 	if (!parseParametersFunc(execute_data, object, value)) {
 		return;
 	}
 
-	writeTypeFunc(object->buffer, object->write_offset, value);
-	if (object->write_offset > object->used) {
-		object->used = object->write_offset;
+	writeTypeFunc(object->buffer, object->offset, value);
+	if (object->offset > object->used) {
+		object->used = object->offset;
 	}
 }
 
@@ -226,16 +227,16 @@ using writeTypeArrayFunc_t = void (*)(zend_string*& buffer, size_t& offset, std:
 template<typename TValue, parseParametersFunc_t<std::vector<TValue>> parseParametersFunc, writeTypeArrayFunc_t<TValue> writeTypeFunc>
 void ZEND_FASTCALL zif_writeTypeArray(INTERNAL_FUNCTION_PARAMETERS) {
 	std::vector<TValue> valueArray;
-	byte_buffer_zend_object* object;
+	byte_buffer_writer_zend_object* object;
 
 	if (!parseParametersFunc(execute_data, object, valueArray)) {
 		return;
 	}
 
 	//TODO: for fixed-size types with byte order == native, we can do a simple memcpy instead of this slow loop
-	writeTypeFunc(object->buffer, object->write_offset, valueArray);
-	if (object->write_offset > object->used) {
-		object->used = object->write_offset;
+	writeTypeFunc(object->buffer, object->offset, valueArray);
+	if (object->offset > object->used) {
+		object->used = object->offset;
 	}
 }
 

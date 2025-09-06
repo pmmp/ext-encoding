@@ -3,7 +3,8 @@ Test that ByteBuffer read/write methods behave the same as their pack/unpack equ
 --FILE--
 <?php
 
-use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\ByteBufferReader;
+use pmmp\encoding\ByteBufferWriter;
 use pmmp\encoding\BE;
 use pmmp\encoding\LE;
 use pmmp\encoding\Byte;
@@ -37,14 +38,14 @@ foreach($map as $packCode => [$readFunc, $writeFunc, $testValues]){
     foreach($testValues as $value){
         $expectedBytes = pack($packCode, $value);
 
-        $buffer = new ByteBuffer();
+        $buffer = new ByteBufferWriter();
         $writeFunc($buffer, $value);
 
-        if($expectedBytes !== $buffer->toString()){
-            echo "Mismatch \"$packCode\" write: " . bin2hex($expectedBytes) . " " . bin2hex($buffer->toString()) . "\n";
+        if($expectedBytes !== $buffer->getData()){
+            echo "Mismatch \"$packCode\" write: " . bin2hex($expectedBytes) . " " . bin2hex($buffer->getData()) . "\n";
         }
 
-        $buffer = new ByteBuffer($expectedBytes);
+        $buffer = new ByteBufferReader($expectedBytes);
         $decodedValue = $readFunc($buffer);
 
         if($value !== $decodedValue){

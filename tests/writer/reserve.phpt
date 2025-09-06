@@ -3,23 +3,23 @@ Test that reserving works correctly
 --FILE--
 <?php
 
-use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\ByteBufferWriter;
 use pmmp\encoding\Byte;
 
-$buffer = new ByteBuffer("");
+$buffer = new ByteBufferWriter("");
 var_dump($buffer->getReservedLength()); //none
 
 $buffer->reserve(40);
 var_dump($buffer->getReservedLength()); //40
-var_dump($buffer->toString()); //still empty, we haven't used any space
+var_dump($buffer->getData()); //still empty, we haven't used any space
 
 Byte::writeSigned($buffer, ord("a"));
 var_dump($buffer->getReservedLength()); //40
-var_dump($buffer->toString());
+var_dump($buffer->getData());
 
 $buffer->writeByteArray(str_repeat("a", 40)); //cause new allocation, this should double the buffer size to 80
 var_dump($buffer->getReservedLength()); //80
-var_dump($buffer->toString());
+var_dump($buffer->getData());
 
 try{
     $buffer->reserve(-1);

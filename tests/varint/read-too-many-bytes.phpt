@@ -13,7 +13,7 @@ encoding
 --FILE--
 <?php
 
-use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\ByteBufferReader;
 use pmmp\encoding\DataDecodeException;
 use pmmp\encoding\VarInt;
 
@@ -21,25 +21,25 @@ $shortBuf = str_repeat("\x80", 6);
 $longBuf = str_repeat("\x80", 11);
 
 try{
-	VarInt::readUnsignedInt(new ByteBuffer($shortBuf));
+	VarInt::readUnsignedInt(new ByteBufferReader($shortBuf));
 }catch(DataDecodeException $e){
 	echo "uv32: " . $e->getMessage() . PHP_EOL;
 }
 
 try{
-	VarInt::readSignedInt(new ByteBuffer($shortBuf));
+	VarInt::readSignedInt(new ByteBufferReader($shortBuf));
 }catch(DataDecodeException $e){
 	echo "sv32: " . $e->getMessage() . PHP_EOL;
 }
 
 try{
-	VarInt::readUnsignedLong(new ByteBuffer($longBuf));
+	VarInt::readUnsignedLong(new ByteBufferReader($longBuf));
 }catch(DataDecodeException $e){
 	echo "uv64: " . $e->getMessage() . PHP_EOL;
 }
 
 try{
-	VarInt::readSignedLong(new ByteBuffer($longBuf));
+	VarInt::readSignedLong(new ByteBufferReader($longBuf));
 }catch(DataDecodeException $e){
 	echo "sv64: " . $e->getMessage() . PHP_EOL;
 }

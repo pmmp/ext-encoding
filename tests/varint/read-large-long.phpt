@@ -8,22 +8,22 @@ to be discarded. This test verifies the result of the fix.
 --FILE--
 <?php
 
-use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\ByteBufferReader;
 use pmmp\encoding\VarInt;
 
 //unsigned
 $buffer_2 = str_repeat("\x81", 8) . "\x01";
-$buf_2 = new ByteBuffer($buffer_2);
+$buf_2 = new ByteBufferReader($buffer_2);
 var_dump(VarInt::readUnsignedLong($buf_2));
 
 //negative signed
 $buffer_3 = str_repeat("\x81", 8) . "\x01";
-$buf_3 = new ByteBuffer($buffer_3);
+$buf_3 = new ByteBufferReader($buffer_3);
 var_dump(VarInt::readSignedLong($buf_3));
 
 //positive signed
 $buffer_3 = "\x80" . str_repeat("\x81", 7) . "\x01";
-$buf_3 = new ByteBuffer($buffer_3);
+$buf_3 = new ByteBufferReader($buffer_3);
 var_dump(VarInt::readSignedLong($buf_3));
 
 ?>

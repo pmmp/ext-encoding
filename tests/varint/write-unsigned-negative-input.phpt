@@ -20,18 +20,19 @@ encoding
 --FILE--
 <?php
 
-use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\ByteBufferWriter;
+use pmmp\encoding\ByteBufferReader;
 use pmmp\encoding\VarInt;
 
-$buffer = new ByteBuffer("");
+$buffer = new ByteBufferWriter("");
 VarInt::writeUnsignedInt($buffer, -1);
-$buffer->setReadOffset(0);
-var_dump(VarInt::readUnsignedInt($buffer));
+$reader = new ByteBufferReader($buffer->getData());
+var_dump(VarInt::readUnsignedInt($reader));
 
-$buffer->setWriteOffset(0);
+$buffer->setOffset(0);
 VarInt::writeUnsignedLong($buffer, -1);
-$buffer->setReadOffset(0);
-var_dump(VarInt::readUnsignedLong($buffer));
+$reader = new ByteBufferReader($buffer->getData());
+var_dump(VarInt::readUnsignedLong($reader));
 
 ?>
 --EXPECT--

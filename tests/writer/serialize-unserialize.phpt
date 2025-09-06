@@ -3,28 +3,24 @@ Test that ByteBuffer serializes and unserializes correctly
 --FILE--
 <?php
 
-use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\ByteBufferWriter;
 
-$buffer = new ByteBuffer("hello world");
+$buffer = new ByteBufferWriter("hello world");
 $buffer2 = unserialize(serialize($buffer));
 
 var_dump($buffer, $buffer2);
 
 ?>
 --EXPECTF--
-object(pmmp\encoding\ByteBuffer)#%d (3) {
+object(pmmp\encoding\ByteBufferWriter)#%d (2) {
   ["buffer"]=>
   string(11) "hello world"
-  ["read_offset"]=>
-  int(0)
-  ["write_offset"]=>
+  ["offset"]=>
   int(11)
 }
-object(pmmp\encoding\ByteBuffer)#%d (3) {
+object(pmmp\encoding\ByteBufferWriter)#%d (2) {
   ["buffer"]=>
   string(11) "hello world"
-  ["read_offset"]=>
-  int(0)
-  ["write_offset"]=>
+  ["offset"]=>
   int(11)
 }

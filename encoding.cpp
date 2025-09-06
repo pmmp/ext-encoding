@@ -11,7 +11,8 @@ extern "C" {
 #include "ext/spl/spl_exceptions.h"
 #include "stubs/DataDecodeException_arginfo.h"
 }
-#include "classes/ByteBuffer.h"
+#include "classes/ByteBufferReader.h"
+#include "classes/ByteBufferWriter.h"
 #include "classes/Types.h"
 #include "classes/DataDecodeException.h"
 
@@ -41,7 +42,8 @@ zend_class_entry* data_decode_exception_ce;
 
 PHP_MINIT_FUNCTION(encoding) {
 	data_decode_exception_ce = register_class_pmmp_encoding_DataDecodeException(spl_ce_RuntimeException);
-	init_class_ByteBuffer();
+	init_class_ByteBufferReader();
+	init_class_ByteBufferWriter();
 	init_class_Types();
 
 	return SUCCESS;

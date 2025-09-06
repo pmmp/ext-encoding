@@ -5,17 +5,17 @@ encoding
 --FILE--
 <?php
 
-use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\ByteBufferReader;
 use pmmp\encoding\VarInt;
 
 function test(\Closure $function, int $size) : void{
 	$varint = str_repeat(str_repeat("\x80", $size - 1) . "\x00", 3);
-	$buffer = new ByteBuffer($varint);
+	$buffer = new ByteBufferReader($varint);
 	$originalOffset = $size;
-	$buffer->setReadOffset($originalOffset);
+	$buffer->setOffset($originalOffset);
 
 	$function($buffer);
-	var_dump($buffer->getReadOffset() === $size + $originalOffset);
+	var_dump($buffer->getOffset() === $size + $originalOffset);
 }
 
 test(VarInt::readUnsignedInt(...), 5);

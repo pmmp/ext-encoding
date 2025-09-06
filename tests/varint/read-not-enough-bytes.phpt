@@ -5,21 +5,21 @@ encoding
 --FILE--
 <?php
 
-use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\ByteBufferReader;
 use pmmp\encoding\DataDecodeException;
 use pmmp\encoding\VarInt;
 
 function test(\Closure $function) : void{
-	$buffer = new ByteBuffer("\x80");
+	$buffer = new ByteBufferReader("\x80");
 	try{
 		$function($buffer);
 	}catch(DataDecodeException $e){
 		echo "no offset, not enough bytes: " . $e->getMessage() . "\n";
 	}
 
-	$buffer = new ByteBuffer("\x00\x00\x00\x00\x80");
+	$buffer = new ByteBufferReader("\x00\x00\x00\x00\x80");
 	try{
-		$buffer->setReadOffset(4);
+		$buffer->setOffset(4);
 		$function($buffer);
 	}catch(DataDecodeException $e){
 		echo "offset valid, not enough bytes: " . $e->getMessage() . "\n";

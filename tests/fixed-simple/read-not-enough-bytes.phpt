@@ -5,7 +5,7 @@ encoding
 --FILE--
 <?php
 
-use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\ByteBufferReader;
 use pmmp\encoding\DataDecodeException;
 
 $functions = require __DIR__ . '/read-samples.inc';
@@ -13,7 +13,7 @@ $functions = require __DIR__ . '/read-samples.inc';
 $test = str_repeat("\x00", 16);
 foreach($functions as [$function, $buf]){
 	try{
-		$buffer = new ByteBuffer("\x00");
+		$buffer = new ByteBufferReader("\x00");
         $function($buffer);
 	}catch(DataDecodeException $e){
 		$reflect = new \ReflectionFunction($function);
@@ -22,8 +22,8 @@ foreach($functions as [$function, $buf]){
 	}
 
 	try{
-		$buffer = new ByteBuffer($test);
-		$buffer->setReadOffset(15);
+		$buffer = new ByteBufferReader($test);
+		$buffer->setOffset(15);
         $function($buffer);
 	}catch(DataDecodeException $e){
 		$reflect = new \ReflectionFunction($function);

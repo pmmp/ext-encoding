@@ -1,12 +1,12 @@
 --TEST--
-Test that ByteBuffer::readByteArray() works as expected
+Test that ByteBufferReader::readByteArray() works as expected
 --FILE--
 <?php
 
-use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\ByteBufferReader;
 use pmmp\encoding\DataDecodeException;
 
-$buffer = new ByteBuffer("");
+$buffer = new ByteBufferReader("");
 
 //read with no bytes available
 try{
@@ -15,7 +15,7 @@ try{
     echo $e->getMessage() . PHP_EOL;
 }
 
-$buffer = new ByteBuffer("abcde");
+$buffer = new ByteBufferReader("abcde");
 var_dump($buffer->readByteArray(3));
 var_dump($buffer->readByteArray(1));
 try{
@@ -24,7 +24,7 @@ try{
     echo $e->getMessage() . PHP_EOL;
 }
 
-$buffer = new ByteBuffer("abcde");
+$buffer = new ByteBufferReader("abcde");
 try{
     $buffer->readByteArray(-1);
 }catch(\ValueError $e){
@@ -32,12 +32,12 @@ try{
 }
 
 //ensure offset is updated properly
-$buffer->setReadOffset(1);
+$buffer->setOffset(1);
 var_dump($buffer->readByteArray(2));
-var_dump($buffer->getReadOffset());
+var_dump($buffer->getOffset());
 
 //read with bytes, but all before the buffer start
-$buffer->setReadOffset(5);
+$buffer->setOffset(5);
 try{
     $buffer->readByteArray(2);
 }catch(DataDecodeException $e){

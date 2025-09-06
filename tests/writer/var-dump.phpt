@@ -1,24 +1,22 @@
 --TEST--
-Test that ByteBuffer::__debugInfo() doesn't read out-of-bounds when dumping internal buffer
+Test that ByteBufferWriterWriter::__debugInfo() doesn't read out-of-bounds when dumping internal buffer
 --DESCRIPTION--
 The debuginfo handler wasn't accounting for the possibility that the used portion of the internal buffer may be smaller than the allocated capacity.
 In some cases, this could lead to segfaults due to reading out-of-bounds.
 --FILE--
 <?php
 
-use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\ByteBufferWriter;
 
-$buffer = new ByteBuffer();
+$buffer = new ByteBufferWriter();
 $buffer->writeByteArray("looooooooooooong");
 $buffer->writeByteArray(" short"); //this will result in a buffer larger than the contents as the previous size will be doubled
 var_dump($buffer);
 ?>
 --EXPECTF--
-object(pmmp\encoding\ByteBuffer)#%d (3) {
+object(pmmp\encoding\ByteBufferWriter)#%d (2) {
   ["buffer"]=>
   string(22) "looooooooooooong short"
-  ["read_offset"]=>
-  int(0)
-  ["write_offset"]=>
+  ["offset"]=>
   int(22)
 }

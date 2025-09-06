@@ -5,21 +5,21 @@ Triads require special implementation due to not being a power-of-two size. This
 --FILE--
 <?php
 
-use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\ByteBufferReader;
 use pmmp\encoding\BE;
 use pmmp\encoding\LE;
 
-$buffer = new ByteBuffer("\xff\x00\x00");
+$buffer = new ByteBufferReader("\xff\x00\x00");
 
 var_dump(BE::readSignedTriad($buffer));
 
-$buffer->setReadOffset(0);
+$buffer->setOffset(0);
 var_dump(LE::readSignedTriad($buffer));
 
-$buffer->setReadOffset(0);
+$buffer->setOffset(0);
 var_dump(BE::readUnsignedTriad($buffer));
 
-$buffer->setReadOffset(0);
+$buffer->setOffset(0);
 var_dump(LE::readUnsignedTriad($buffer));
 
 ?>

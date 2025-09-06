@@ -5,17 +5,17 @@ encoding
 --FILE--
 <?php
 
-use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\ByteBufferReader;
 
 function test(\Closure $function, int $size) : void{
 	$originalOffset = $size;
 
 	$bytes = str_repeat("\x00", $size * 3);
-	$buffer = new ByteBuffer($bytes);
-	$buffer->setReadOffset($originalOffset);
+	$buffer = new ByteBufferReader($bytes);
+	$buffer->setOffset($originalOffset);
 
 	$function($buffer);
-	var_dump($buffer->getReadOffset() === $originalOffset + $size);
+	var_dump($buffer->getOffset() === $originalOffset + $size);
 }
 
 $functions = require __DIR__ . '/read-samples.inc';

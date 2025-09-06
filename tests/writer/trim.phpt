@@ -1,18 +1,18 @@
 --TEST--
-Test that ByteBuffer::trim() works correctly
+Test that ByteBufferWriter::trim() works correctly
 --FILE--
 <?php
 
-use pmmp\encoding\ByteBuffer;
+use pmmp\encoding\ByteBufferWriter;
 
-$buffer = new ByteBuffer("");
+$buffer = new ByteBufferWriter("");
 $buffer->reserve(100);
 $buffer->writeByteArray("aaaaa");
 var_dump($buffer->getReservedLength());
 $buffer->trim();
 var_dump($buffer->getReservedLength());
 
-$buffer = new ByteBuffer("aaaaaaaaaa");
+$buffer = new ByteBufferWriter("aaaaaaaaaa");
 $buffer->trim();
 var_dump($buffer->getReservedLength());
 ?>

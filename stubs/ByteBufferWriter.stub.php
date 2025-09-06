@@ -7,25 +7,18 @@ namespace pmmp\encoding;
 /**
  * @strict-properties
  */
-final class ByteBuffer{
+final class ByteBufferWriter{
 	/**
-	 * Constructs a new ByteBuffer.
-	 * The read offset will be initialized to 0.
-	 * The write offset will be initialized to the length of the given buffer.
+	 * Constructs a new ByteBufferWriter.
+     * The provided string will be written at the start of the buffer as if readByteArray() was called.
 	 */
-	public function __construct(string $buffer = ""){}
+	public function __construct(string $prefix = ""){}
 
 	/**
-	 * Returns a string containing the initialized bytes.
+	 * Returns a string containing the written bytes.
 	 * Reserved memory is not included.
 	 */
-	public function toString() : string{}
-
-	/**
-	 * Reads $length raw bytes from the buffer at the current offset.
-	 * The internal offset will be updated by this operation.
-	 */
-	public function readByteArray(int $length) : string{}
+	public function getData() : string{}
 
 	/**
 	 * Writes the given bytes to the buffer at the current offset.
@@ -39,25 +32,10 @@ final class ByteBuffer{
 	public function writeByteArray(string $value) : void{}
 
 	/**
-	 * Returns the current internal read offset (the position
-	 * from which the next read operation will start).
-	 */
-	public function getReadOffset() : int{}
-
-	/**
 	 * Returns the current internal write offset (the position
 	 * from which the next write operation will start).
 	 */
-	public function getWriteOffset() : int{}
-
-	/**
-	 * Sets the internal read offset to the given value.
-	 * The offset must be within the bounds of the buffer
-	 * (0 <= offset <= used length).
-	 *
-	 * @throws \ValueError if the offset is out of bounds
-	 */
-	public function setReadOffset(int $offset) : void{}
+	public function getOffset() : int{}
 
 	/**
 	 * Sets the internal write offset to the given value.
@@ -66,17 +44,17 @@ final class ByteBuffer{
 	 *
 	 * @throws \ValueError if the offset is out of bounds
 	 */
-	public function setWriteOffset(int $offset) : void{}
+	public function setOffset(int $offset) : void{}
 
 	/**
-	 * Returns the total number of bytes written or available to read.
+	 * Returns the total number of bytes written.
 	 * This will always be less than or equal to the reserved length.
 	 */
 	public function getUsedLength() : int{}
 
 	/**
 	 * Returns the number of bytes reserved by the ByteBuffer.
-	 * This value may be larger than the number of readable bytes, as
+	 * This value may be larger than the number of written bytes, as
 	 * some memory may be preallocated to avoid reallocations.
 	 */
 	public function getReservedLength() : int{}
@@ -90,7 +68,7 @@ final class ByteBuffer{
 	public function reserve(int $length) : void{}
 
 	/**
-	 * Truncates the internal buffer to only the initialized part,
+	 * Truncates the internal buffer to only the written part,
 	 * discarding any unused reserved memory.
 	 */
 	public function trim() : void{}

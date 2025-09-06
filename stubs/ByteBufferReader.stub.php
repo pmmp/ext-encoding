@@ -11,18 +11,18 @@ namespace pmmp\encoding;
  * @strict-properties
  */
 final class ByteBufferReader{
-	/**
+	/** @genstubs-expose-comment-block
 	 * Constructs a new ByteBufferReader.
 	 * Offset will be initialized to 0.
 	 */
 	public function __construct(string $data){}
 
-	/**
+	/** @genstubs-expose-comment-block
 	 * Returns the string (byte array) that the reader is reading.
 	 */
 	public function getData() : string{}
 
-	/**
+	/** @genstubs-expose-comment-block
 	 * Reads $length raw bytes from the buffer at the current offset.
 	 * The internal offset will be updated by this operation.
      *
@@ -30,13 +30,13 @@ final class ByteBufferReader{
 	 */
 	public function readByteArray(int $length) : string{}
 
-	/**
+	/** @genstubs-expose-comment-block
 	 * Returns the current internal read offset (the position
 	 * from which the next read operation will start).
 	 */
 	public function getOffset() : int{}
 
-	/**
+	/** @genstubs-expose-comment-block
 	 * Sets the internal read offset to the given value.
 	 * The offset must be within the bounds of the buffer
 	 * (0 <= offset <= used length).

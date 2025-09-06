@@ -36,6 +36,11 @@ ZEND_ARG_OBJ_INFO(0, buffer, pmmp\\encoding\\ByteBufferWriter, 0)
 ZEND_ARG_ARRAY_INFO(0, values, 0)
 ZEND_END_ARG_INFO()
 
+static const char* read_int_array_doc_comment = "/**\n\t * @return int[]\n\t * @phpstan-return list<int>\n\t */";
+static const char* read_float_array_doc_comment = "/**\n\t * @return float[]\n\t * @phpstan-return list<float>\n\t */";
+static const char* write_int_array_doc_comment = "/**\n\t * @param int[] $values\n\t * @phpstan-param list<int> $values\n\t */";
+static const char* write_float_array_doc_comment = "/**\n\t * @param float[] $values\n\t * @phpstan-param list<float> $values\n\t */";
+
 template<typename TValue>
 static inline void zval_long_wrapper(zval* zv, TValue value) {
 	ZVAL_LONG(zv, value);
@@ -246,8 +251,10 @@ ZEND_NAMED_FUNCTION(pmmp_encoding_private_constructor) {
 
 #if PHP_VERSION_ID >= 80400
 #define BC_ZEND_RAW_FENTRY(zend_name, name, arg_info) ZEND_RAW_FENTRY(zend_name, name, arg_info, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC, NULL, NULL)
+#define BC_ZEND_RAW_FENTRY_WITH_DOC_COMMENT(zend_name, name, arg_info, doc_comment) ZEND_RAW_FENTRY(zend_name, name, arg_info, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC, NULL, doc_comment)
 #else
 #define BC_ZEND_RAW_FENTRY(zend_name, name, arg_info) ZEND_RAW_FENTRY(zend_name, name, arg_info, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+#define BC_ZEND_RAW_FENTRY_WITH_DOC_COMMENT(zend_name, name, arg_info, doc_comment) ZEND_RAW_FENTRY(zend_name, name, arg_info, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 #endif
 
 #define TYPE_ENTRIES(zend_name, native_type, read_type, read_result_wrapper, arg_info_read, write_parameter_wrapper, write_type, arg_info_write) \
@@ -275,35 +282,41 @@ ZEND_NAMED_FUNCTION(pmmp_encoding_private_constructor) {
 		arg_info_write \
 	)
 
-#define TYPE_ARRAY_ENTRIES(zend_name, native_type, read_complex_type, read_result_wrapper, write_parameter_wrapper, write_complex_type) \
-	BC_ZEND_RAW_FENTRY( \
+#define TYPE_ARRAY_ENTRIES(zend_name, native_type, read_doc_comment, read_complex_type, read_result_wrapper, write_doc_comment, write_parameter_wrapper, write_complex_type) \
+	BC_ZEND_RAW_FENTRY_WITH_DOC_COMMENT( \
 		"read" zend_name "Array", \
 		(zif_readTypeArray<native_type, read_complex_type, read_result_wrapper<native_type>>), \
-		arginfo_read_array \
+		arginfo_read_array, \
+		read_doc_comment \
 	) \
 	\
-	BC_ZEND_RAW_FENTRY( \
+	BC_ZEND_RAW_FENTRY_WITH_DOC_COMMENT( \
 		"write" zend_name "Array", \
 		(zif_writeTypeArray<native_type, write_parameter_wrapper<native_type>, write_complex_type>), \
-		arginfo_write_array \
+		arginfo_write_array, \
+		write_doc_comment \
 	)
 
-#define FIXED_TYPE_ARRAY_ENTRIES(zend_name, native_type, read_result_wrapper, write_parameter_wrapper, byte_order) \
+#define FIXED_TYPE_ARRAY_ENTRIES(zend_name, native_type, read_doc_comment, read_result_wrapper, write_doc_comment, write_parameter_wrapper, byte_order) \
 	TYPE_ARRAY_ENTRIES( \
 		zend_name, \
 		native_type, \
+		read_doc_comment, \
 		(readFixedSizeTypeArray<native_type, byte_order>), \
 		read_result_wrapper, \
+		write_doc_comment, \
 		write_parameter_wrapper, \
 		(writeFixedSizeTypeArray<native_type, byte_order>) \
 	)
 
-#define COMPLEX_TYPE_ARRAY_ENTRIES(zend_name, native_type, read_element, read_result_wrapper, write_parameter_wrapper, write_element) \
+#define COMPLEX_TYPE_ARRAY_ENTRIES(zend_name, native_type, read_doc_comment, read_element, read_result_wrapper, write_doc_comment, write_parameter_wrapper, write_element) \
 	TYPE_ARRAY_ENTRIES( \
 		zend_name, \
 		native_type, \
+		read_doc_comment, \
 		(readComplexTypeArray<native_type, read_element>), \
 		read_result_wrapper, \
+		write_doc_comment, \
 		write_parameter_wrapper, \
 		(writeComplexTypeArray<native_type, write_element>) \
 	)
@@ -311,7 +324,7 @@ ZEND_NAMED_FUNCTION(pmmp_encoding_private_constructor) {
 #define FIXED_INT_BASE_ENTRIES(zend_name, native_type, byte_order) \
 	FIXED_TYPE_ENTRIES(zend_name, native_type, zend_parse_parameters_long_wrapper, zval_long_wrapper, arginfo_read_integer, arginfo_write_integer, byte_order) \
 	\
-	FIXED_TYPE_ARRAY_ENTRIES(zend_name, native_type, return_long_array, zend_parse_parameters_long_array_wrapper, byte_order)
+	FIXED_TYPE_ARRAY_ENTRIES(zend_name, native_type, read_int_array_doc_comment, return_long_array, write_int_array_doc_comment, zend_parse_parameters_long_array_wrapper, byte_order)
 
 #define FIXED_INT_ENTRIES(zend_name, unsigned_native_type, signed_native_type, byte_order) \
 	FIXED_INT_BASE_ENTRIES("Unsigned" zend_name, unsigned_native_type, byte_order) \
@@ -320,7 +333,7 @@ ZEND_NAMED_FUNCTION(pmmp_encoding_private_constructor) {
 
 #define FLOAT_ENTRIES(zend_name, native_type, byte_order) \
 	FIXED_TYPE_ENTRIES(zend_name, native_type, zend_parse_parameters_double_wrapper, zval_double_wrapper, arginfo_read_float, arginfo_write_float, byte_order) \
-	FIXED_TYPE_ARRAY_ENTRIES(zend_name, native_type, return_double_array, zend_parse_parameters_double_array_wrapper, byte_order)
+	FIXED_TYPE_ARRAY_ENTRIES(zend_name, native_type, read_float_array_doc_comment, return_double_array, write_float_array_doc_comment, zend_parse_parameters_double_array_wrapper, byte_order)
 
 #define COMPLEX_INT_ENTRIES(zend_name, native_type, read_type, write_type) \
 	TYPE_ENTRIES( \
@@ -336,8 +349,10 @@ ZEND_NAMED_FUNCTION(pmmp_encoding_private_constructor) {
 	COMPLEX_TYPE_ARRAY_ENTRIES( \
 		zend_name, \
 		native_type, \
+		read_int_array_doc_comment, \
 		read_type, \
 		return_long_array, \
+		write_int_array_doc_comment, \
 		zend_parse_parameters_long_array_wrapper, \
 		write_type \
 	)

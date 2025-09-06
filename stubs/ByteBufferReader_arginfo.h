@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: 8f3830b90fe252e654ecab89c16f352e654505f8 */
+ * Stub hash: cf60f8c040fc3c12584760bd1db045b054100c6b */
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_class_pmmp_encoding_ByteBufferReader___construct, 0, 0, 1)
 	ZEND_ARG_TYPE_INFO(0, data, IS_STRING, 0)
@@ -38,11 +38,31 @@ ZEND_METHOD(pmmp_encoding_ByteBufferReader, __unserialize);
 ZEND_METHOD(pmmp_encoding_ByteBufferReader, __debugInfo);
 
 static const zend_function_entry class_pmmp_encoding_ByteBufferReader_methods[] = {
-	ZEND_ME(pmmp_encoding_ByteBufferReader, __construct, arginfo_class_pmmp_encoding_ByteBufferReader___construct, ZEND_ACC_PUBLIC)
-	ZEND_ME(pmmp_encoding_ByteBufferReader, getData, arginfo_class_pmmp_encoding_ByteBufferReader_getData, ZEND_ACC_PUBLIC)
-	ZEND_ME(pmmp_encoding_ByteBufferReader, readByteArray, arginfo_class_pmmp_encoding_ByteBufferReader_readByteArray, ZEND_ACC_PUBLIC)
-	ZEND_ME(pmmp_encoding_ByteBufferReader, getOffset, arginfo_class_pmmp_encoding_ByteBufferReader_getOffset, ZEND_ACC_PUBLIC)
-	ZEND_ME(pmmp_encoding_ByteBufferReader, setOffset, arginfo_class_pmmp_encoding_ByteBufferReader_setOffset, ZEND_ACC_PUBLIC)
+#if (PHP_VERSION_ID >= 80400)
+	ZEND_RAW_FENTRY("__construct", zim_pmmp_encoding_ByteBufferReader___construct, arginfo_class_pmmp_encoding_ByteBufferReader___construct, ZEND_ACC_PUBLIC, NULL, "/**\n	 * Constructs a new ByteBufferReader.\n	 * Offset will be initialized to 0.\n	 */")
+#else
+	ZEND_RAW_FENTRY("__construct", zim_pmmp_encoding_ByteBufferReader___construct, arginfo_class_pmmp_encoding_ByteBufferReader___construct, ZEND_ACC_PUBLIC)
+#endif
+#if (PHP_VERSION_ID >= 80400)
+	ZEND_RAW_FENTRY("getData", zim_pmmp_encoding_ByteBufferReader_getData, arginfo_class_pmmp_encoding_ByteBufferReader_getData, ZEND_ACC_PUBLIC, NULL, "/**\n	 * Returns the string (byte array) that the reader is reading.\n	 */")
+#else
+	ZEND_RAW_FENTRY("getData", zim_pmmp_encoding_ByteBufferReader_getData, arginfo_class_pmmp_encoding_ByteBufferReader_getData, ZEND_ACC_PUBLIC)
+#endif
+#if (PHP_VERSION_ID >= 80400)
+	ZEND_RAW_FENTRY("readByteArray", zim_pmmp_encoding_ByteBufferReader_readByteArray, arginfo_class_pmmp_encoding_ByteBufferReader_readByteArray, ZEND_ACC_PUBLIC, NULL, "/**\n	 * Reads $length raw bytes from the buffer at the current offset.\n	 * The internal offset will be updated by this operation.\n     *\n     * @throws DataDecodeException if there are not enough bytes available\n	 */")
+#else
+	ZEND_RAW_FENTRY("readByteArray", zim_pmmp_encoding_ByteBufferReader_readByteArray, arginfo_class_pmmp_encoding_ByteBufferReader_readByteArray, ZEND_ACC_PUBLIC)
+#endif
+#if (PHP_VERSION_ID >= 80400)
+	ZEND_RAW_FENTRY("getOffset", zim_pmmp_encoding_ByteBufferReader_getOffset, arginfo_class_pmmp_encoding_ByteBufferReader_getOffset, ZEND_ACC_PUBLIC, NULL, "/**\n	 * Returns the current internal read offset (the position\n	 * from which the next read operation will start).\n	 */")
+#else
+	ZEND_RAW_FENTRY("getOffset", zim_pmmp_encoding_ByteBufferReader_getOffset, arginfo_class_pmmp_encoding_ByteBufferReader_getOffset, ZEND_ACC_PUBLIC)
+#endif
+#if (PHP_VERSION_ID >= 80400)
+	ZEND_RAW_FENTRY("setOffset", zim_pmmp_encoding_ByteBufferReader_setOffset, arginfo_class_pmmp_encoding_ByteBufferReader_setOffset, ZEND_ACC_PUBLIC, NULL, "/**\n	 * Sets the internal read offset to the given value.\n	 * The offset must be within the bounds of the buffer\n	 * (0 <= offset <= used length).\n	 *\n	 * @throws \\ValueError if the offset is out of bounds\n	 */")
+#else
+	ZEND_RAW_FENTRY("setOffset", zim_pmmp_encoding_ByteBufferReader_setOffset, arginfo_class_pmmp_encoding_ByteBufferReader_setOffset, ZEND_ACC_PUBLIC)
+#endif
 	ZEND_ME(pmmp_encoding_ByteBufferReader, __serialize, arginfo_class_pmmp_encoding_ByteBufferReader___serialize, ZEND_ACC_PUBLIC)
 	ZEND_ME(pmmp_encoding_ByteBufferReader, __unserialize, arginfo_class_pmmp_encoding_ByteBufferReader___unserialize, ZEND_ACC_PUBLIC)
 	ZEND_ME(pmmp_encoding_ByteBufferReader, __debugInfo, arginfo_class_pmmp_encoding_ByteBufferReader___debugInfo, ZEND_ACC_PUBLIC)

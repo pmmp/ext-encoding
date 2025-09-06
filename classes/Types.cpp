@@ -162,7 +162,7 @@ static bool zend_parse_parameters_double_array_wrapper(zend_execute_data* execut
 	ZEND_HASH_FOREACH_VAL(valueArrayHt, elementZv) {
 		if (Z_TYPE_P(elementZv) != IS_DOUBLE) {
 			//TODO: give the correct array key when strings are used - I don't know how to do this in a non-awkward way currently
-			zend_type_error("Array must contain only float, %s given at position %zu", zend_zval_value_name(elementZv), valueArray.size());
+			zend_type_error("Array must contain only float, %s given at position %zu", zend_zval_type_name(elementZv), valueArray.size());
 			return false;
 		}
 		TValue value = static_cast<TValue>(Z_DVAL_P(elementZv));
@@ -187,7 +187,7 @@ static bool zend_parse_parameters_long_array_wrapper(zend_execute_data* execute_
 	ZEND_HASH_FOREACH_VAL(valueArrayHt, elementZv) {
 		if (Z_TYPE_P(elementZv) != IS_LONG) {
 			//TODO: give the correct array key when strings are used - I don't know how to do this in a non-awkward way currently
-			zend_type_error("Array must contain only int, %s given at position %zu", zend_zval_value_name(elementZv), valueArray.size());
+			zend_type_error("Array must contain only int, %s given at position %zu", zend_zval_type_name(elementZv), valueArray.size());
 			return false;
 		}
 		TValue value = static_cast<TValue>(Z_LVAL_P(elementZv));

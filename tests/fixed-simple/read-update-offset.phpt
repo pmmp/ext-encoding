@@ -1,5 +1,5 @@
 --TEST--
-read*() for fixed-size type must correctly update the reference $offset parameter if given
+(BE|LE)::read*() for fixed-size type must correctly update the reference $offset parameter if given
 --EXTENSIONS--
 encoding
 --FILE--
@@ -18,7 +18,7 @@ function test(\Closure $function, int $size) : void{
 	var_dump($buffer->getReadOffset() === $originalOffset + $size);
 }
 
-$functions = require __DIR__ . '/fixed-size-types.inc';
+$functions = require __DIR__ . '/read-samples.inc';
 
 foreach($functions as [$function, $buf]){
 	test($function, strlen($buf));

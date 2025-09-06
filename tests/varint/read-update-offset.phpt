@@ -1,5 +1,5 @@
 --TEST--
-read(Un)SignedVar(Int|Long)() must correctly update the internal offset
+VarInt::read(Un)Signed(Int|Long)() must correctly update the internal offset
 --EXTENSIONS--
 encoding
 --FILE--

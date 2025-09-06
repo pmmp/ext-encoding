@@ -8,7 +8,7 @@ encoding
 use pmmp\encoding\ByteBuffer;
 use pmmp\encoding\DataDecodeException;
 
-$functions = require __DIR__ . '/fixed-size-types.inc';
+$functions = require __DIR__ . '/read-samples.inc';
 
 $test = str_repeat("\x00", 16);
 foreach($functions as [$function, $buf]){

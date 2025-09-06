@@ -8,7 +8,7 @@ use pmmp\encoding\ByteBufferReader;
 $buffer = new ByteBufferReader("abc");
 var_dump($buffer->getData());
 
-$buffer = new ByteBufferReader();
+$buffer = new ByteBufferReader("");
 var_dump($buffer->getData());
 
 $buffer = new ByteBufferReader("hello world");

@@ -349,7 +349,7 @@ ZEND_NAMED_FUNCTION(pmmp_encoding_private_constructor) {
 
 #define VARINT_ENTRIES(zend_name, unsigned_type, signed_type) \
 	COMPLEX_INT_ENTRIES("Unsigned" zend_name, unsigned_type, (readUnsignedVarInt<unsigned_type>), (writeUnsignedVarInt<unsigned_type>)) \
-	COMPLEX_INT_ENTRIES("Signed" zend_name, signed_type, (readSignedVarInt<signed_type>), (writeSignedVarInt<signed_type>))
+	COMPLEX_INT_ENTRIES("Signed" zend_name, signed_type, (readSignedVarInt<unsigned_type, signed_type>), (writeSignedVarInt<unsigned_type, signed_type>))
 
 #define BYTE_ENTRY(zend_name, native_type) \
 	TYPE_ENTRIES(zend_name, native_type, (readByte<native_type>), zval_long_wrapper, arginfo_read_integer, zend_parse_parameters_long_wrapper, (writeByte<native_type>), arginfo_write_integer)

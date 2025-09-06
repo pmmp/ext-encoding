@@ -141,6 +141,7 @@ READER_METHOD(__serialize) {
 
 	auto object = READER_THIS();
 	array_init(return_value);
+	zend_string_addref(object->buffer);
 	add_assoc_str(return_value, "buffer", object->buffer);
 	add_assoc_long(return_value, "offset", object->offset);
 }
@@ -185,6 +186,7 @@ READER_METHOD(__debugInfo) {
 
 	auto object = READER_THIS();
 	array_init(return_value);
+	zend_string_addref(object->buffer);
 	add_assoc_str(return_value, "buffer", object->buffer);
 	add_assoc_long(return_value, "offset", object->offset);
 }

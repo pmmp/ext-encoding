@@ -9,6 +9,7 @@ extern "C" {
 #include <algorithm>
 #include <iterator>
 #include <type_traits>
+#include <vector>
 
 enum class ByteOrder {
 	BigEndian,
@@ -58,6 +59,50 @@ static inline bool readFixedSizeType(unsigned char* bytes, size_t used, size_t& 
 	result = flipper.value;
 
 	offset += SIZE;
+	return true;
+}
+
+template<typename TValue, ByteOrder byteOrder>
+static inline bool readFixedSizeTypeArray(unsigned char* bytes, size_t used, size_t& offset, size_t count, std::vector<TValue>& resultArray) {
+	size_t sizeBytes = count * sizeof(TValue);
+
+	if (used - offset < sizeBytes) {
+		zend_throw_exception_ex(data_decode_exception_ce, 0, "Need at least %zu bytes, but only have %zu bytes", sizeBytes, used - offset);
+		return false;
+	}
+
+	TValue* rawValues = reinterpret_cast<TValue*>(&bytes[offset]);
+
+	resultArray.assign(rawValues, rawValues + count);
+	if (byteOrder != ByteOrder::Native) {
+		Flipper<TValue> flipper;
+
+		for (size_t i = 0; i < count; i++) {
+			flipper.value = resultArray[i];
+			std::reverse(std::begin(flipper.bytes), std::end(flipper.bytes));
+			resultArray[i] = flipper.value;
+		}
+	}
+
+	offset += sizeBytes;
+	return true;
+}
+
+template<typename TValue>
+using readComplexTypeFunc_t = bool (*) (unsigned char* bytes, size_t used, size_t& offset, TValue& result);
+
+template<typename TValue, readComplexTypeFunc_t<TValue> readComplexTypeFunc>
+static inline bool readComplexTypeArray(unsigned char* bytes, size_t used, size_t& offset, size_t count, std::vector<TValue>& resultArray) {
+	for (size_t i = 0; i < count; i++) {
+		TValue value;
+
+		if (!readComplexTypeFunc(bytes, used, offset, value)) {
+			return false;
+		}
+
+		resultArray.push_back(value);
+	}
+
 	return true;
 }
 
@@ -175,6 +220,35 @@ static void writeFixedSizeType(zend_string*& buffer, size_t& offset, TValue valu
 	memcpy(&ZSTR_VAL(buffer)[offset], flipper.bytes, sizeof(flipper.bytes));
 
 	offset += sizeof(TValue);
+}
+
+template<typename TValue, ByteOrder byteOrder>
+static void writeFixedSizeTypeArray(zend_string*& buffer, size_t& offset, std::vector<TValue>& valueArray) {
+	size_t arraySizeBytes = valueArray.size() * sizeof(TValue);
+	extendBuffer(buffer, offset, arraySizeBytes);
+
+	if (byteOrder != ByteOrder::Native) {
+		Flipper<TValue> flipper;
+
+		for (size_t i = 0; i < valueArray.size(); i++) {
+			flipper.value = valueArray[i];
+			std::reverse(std::begin(flipper.bytes), std::end(flipper.bytes));
+			valueArray[i] = flipper.value;
+		}
+	}
+
+	memcpy(&ZSTR_VAL(buffer)[offset], reinterpret_cast<char*>(valueArray.data()), arraySizeBytes);
+	offset += arraySizeBytes;
+}
+
+template<typename TValue>
+using writeComplexTypeFunc_t = void (*) (zend_string*& buffer, size_t& offset, TValue value);
+
+template<typename TValue, writeComplexTypeFunc_t<TValue> writeNaiveTypeFunc>
+static void writeComplexTypeArray(zend_string*& buffer, size_t& offset, std::vector<TValue>& valueArray) {
+	for (size_t i = 0; i < valueArray.size(); i++) {
+		writeNaiveTypeFunc(buffer, offset, valueArray[i]);
+	}
 }
 
 template<typename TValue, ByteOrder byteOrder>

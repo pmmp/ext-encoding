@@ -36,10 +36,13 @@ ZEND_ARG_OBJ_INFO(0, buffer, pmmp\\encoding\\ByteBufferWriter, 0)
 ZEND_ARG_ARRAY_INFO(0, values, 0)
 ZEND_END_ARG_INFO()
 
-static const char* read_int_array_doc_comment = "/**\n\t * @return int[]\n\t * @phpstan-return list<int>\n\t */";
-static const char* read_float_array_doc_comment = "/**\n\t * @return float[]\n\t * @phpstan-return list<float>\n\t */";
+#if PHP_VERSION_ID >= 80400
+static const char* read_int_array_doc_comment = "/**\n\t * @return int[]\n\t * @phpstan-return list<int>\n\t * @throws DataDecodeException\n\t */";
+static const char* read_float_array_doc_comment = "/**\n\t * @return float[]\n\t * @phpstan-return list<float>\n\t * @throws DataDecodeException\n\t */";
 static const char* write_int_array_doc_comment = "/**\n\t * @param int[] $values\n\t * @phpstan-param list<int> $values\n\t */";
 static const char* write_float_array_doc_comment = "/**\n\t * @param float[] $values\n\t * @phpstan-param list<float> $values\n\t */";
+static const char* read_generic_doc_comment = "/** @throws DataDecodeException */";
+#endif
 
 template<typename TValue>
 static inline void zval_long_wrapper(zval* zv, TValue value) {
@@ -258,10 +261,11 @@ ZEND_NAMED_FUNCTION(pmmp_encoding_private_constructor) {
 #endif
 
 #define TYPE_ENTRIES(zend_name, native_type, read_type, read_result_wrapper, arg_info_read, write_parameter_wrapper, write_type, arg_info_write) \
-	BC_ZEND_RAW_FENTRY( \
+	BC_ZEND_RAW_FENTRY_WITH_DOC_COMMENT( \
 		"read" zend_name, \
 		(zif_readType<native_type, read_type, read_result_wrapper<native_type>>), \
-		arg_info_read \
+		arg_info_read, \
+		read_generic_doc_comment \
 	) \
 	\
 	BC_ZEND_RAW_FENTRY( \

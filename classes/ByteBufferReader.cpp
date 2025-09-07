@@ -82,7 +82,7 @@ READER_METHOD(getData) {
 	zend_parse_parameters_none_throw();
 
 	auto object = READER_THIS();
-	RETURN_STR(object->buffer);
+	RETURN_STR_COPY(object->buffer);
 }
 
 READER_METHOD(readByteArray) {

@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: cf60f8c040fc3c12584760bd1db045b054100c6b */
+ * Stub hash: 62940f560eaa6f7714fc03a0d332265026a502f2 */
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_class_pmmp_encoding_ByteBufferReader___construct, 0, 0, 1)
 	ZEND_ARG_TYPE_INFO(0, data, IS_STRING, 0)
@@ -19,6 +19,8 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_pmmp_encoding_ByteBufferRe
 	ZEND_ARG_TYPE_INFO(0, offset, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
+#define arginfo_class_pmmp_encoding_ByteBufferReader_getUnreadLength arginfo_class_pmmp_encoding_ByteBufferReader_getOffset
+
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_pmmp_encoding_ByteBufferReader___serialize, 0, 0, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
@@ -33,6 +35,7 @@ ZEND_METHOD(pmmp_encoding_ByteBufferReader, getData);
 ZEND_METHOD(pmmp_encoding_ByteBufferReader, readByteArray);
 ZEND_METHOD(pmmp_encoding_ByteBufferReader, getOffset);
 ZEND_METHOD(pmmp_encoding_ByteBufferReader, setOffset);
+ZEND_METHOD(pmmp_encoding_ByteBufferReader, getUnreadLength);
 ZEND_METHOD(pmmp_encoding_ByteBufferReader, __serialize);
 ZEND_METHOD(pmmp_encoding_ByteBufferReader, __unserialize);
 ZEND_METHOD(pmmp_encoding_ByteBufferReader, __debugInfo);
@@ -49,7 +52,7 @@ static const zend_function_entry class_pmmp_encoding_ByteBufferReader_methods[] 
 	ZEND_RAW_FENTRY("getData", zim_pmmp_encoding_ByteBufferReader_getData, arginfo_class_pmmp_encoding_ByteBufferReader_getData, ZEND_ACC_PUBLIC)
 #endif
 #if (PHP_VERSION_ID >= 80400)
-	ZEND_RAW_FENTRY("readByteArray", zim_pmmp_encoding_ByteBufferReader_readByteArray, arginfo_class_pmmp_encoding_ByteBufferReader_readByteArray, ZEND_ACC_PUBLIC, NULL, "/**\n	 * Reads $length raw bytes from the buffer at the current offset.\n	 * The internal offset will be updated by this operation.\n     *\n     * @throws DataDecodeException if there are not enough bytes available\n	 */")
+	ZEND_RAW_FENTRY("readByteArray", zim_pmmp_encoding_ByteBufferReader_readByteArray, arginfo_class_pmmp_encoding_ByteBufferReader_readByteArray, ZEND_ACC_PUBLIC, NULL, "/**\n	 * Reads $length raw bytes from the buffer at the current offset.\n	 * The internal offset will be updated by this operation.\n	 *\n	 * @throws DataDecodeException if there are not enough bytes available\n	 */")
 #else
 	ZEND_RAW_FENTRY("readByteArray", zim_pmmp_encoding_ByteBufferReader_readByteArray, arginfo_class_pmmp_encoding_ByteBufferReader_readByteArray, ZEND_ACC_PUBLIC)
 #endif
@@ -62,6 +65,11 @@ static const zend_function_entry class_pmmp_encoding_ByteBufferReader_methods[] 
 	ZEND_RAW_FENTRY("setOffset", zim_pmmp_encoding_ByteBufferReader_setOffset, arginfo_class_pmmp_encoding_ByteBufferReader_setOffset, ZEND_ACC_PUBLIC, NULL, "/**\n	 * Sets the internal read offset to the given value.\n	 * The offset must be within the bounds of the buffer\n	 * (0 <= offset <= used length).\n	 *\n	 * @throws \\ValueError if the offset is out of bounds\n	 */")
 #else
 	ZEND_RAW_FENTRY("setOffset", zim_pmmp_encoding_ByteBufferReader_setOffset, arginfo_class_pmmp_encoding_ByteBufferReader_setOffset, ZEND_ACC_PUBLIC)
+#endif
+#if (PHP_VERSION_ID >= 80400)
+	ZEND_RAW_FENTRY("getUnreadLength", zim_pmmp_encoding_ByteBufferReader_getUnreadLength, arginfo_class_pmmp_encoding_ByteBufferReader_getUnreadLength, ZEND_ACC_PUBLIC, NULL, "/**\n	 * Returns the number of bytes available to read after the\n	 * current offset.\n	 */")
+#else
+	ZEND_RAW_FENTRY("getUnreadLength", zim_pmmp_encoding_ByteBufferReader_getUnreadLength, arginfo_class_pmmp_encoding_ByteBufferReader_getUnreadLength, ZEND_ACC_PUBLIC)
 #endif
 	ZEND_ME(pmmp_encoding_ByteBufferReader, __serialize, arginfo_class_pmmp_encoding_ByteBufferReader___serialize, ZEND_ACC_PUBLIC)
 	ZEND_ME(pmmp_encoding_ByteBufferReader, __unserialize, arginfo_class_pmmp_encoding_ByteBufferReader___unserialize, ZEND_ACC_PUBLIC)

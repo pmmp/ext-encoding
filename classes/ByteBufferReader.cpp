@@ -136,6 +136,13 @@ READER_METHOD(setOffset) {
 	object->offset = static_cast<size_t>(offset);
 }
 
+READER_METHOD(getUnreadLength) {
+	zend_parse_parameters_none_throw();
+
+	auto object = READER_THIS();
+	RETURN_LONG(ZSTR_LEN(object->buffer) - object->offset);
+}
+
 READER_METHOD(__serialize) {
 	zend_parse_parameters_none_throw();
 

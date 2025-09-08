@@ -43,6 +43,10 @@ try{
 }catch(DataDecodeException $e){
     echo $e->getMessage() . PHP_EOL;
 }
+
+$buffer->setOffset(1);
+var_dump($buffer->readByteArray($buffer->getUnreadLength()));
+?>
 --EXPECT--
 Need at least 1 bytes, but only have 0 bytes
 string(3) "abc"
@@ -52,3 +56,4 @@ Length cannot be negative
 string(2) "bc"
 int(3)
 Need at least 2 bytes, but only have 0 bytes
+string(4) "bcde"

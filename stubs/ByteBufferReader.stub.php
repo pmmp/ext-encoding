@@ -25,8 +25,8 @@ final class ByteBufferReader{
 	/** @genstubs-expose-comment-block
 	 * Reads $length raw bytes from the buffer at the current offset.
 	 * The internal offset will be updated by this operation.
-     *
-     * @throws DataDecodeException if there are not enough bytes available
+	 *
+	 * @throws DataDecodeException if there are not enough bytes available
 	 */
 	public function readByteArray(int $length) : string{}
 
@@ -44,6 +44,12 @@ final class ByteBufferReader{
 	 * @throws \ValueError if the offset is out of bounds
 	 */
 	public function setOffset(int $offset) : void{}
+
+	/** @genstubs-expose-comment-block
+	 * Returns the number of bytes available to read after the
+	 * current offset.
+	 */
+	public function getUnreadLength() : int{}
 
 	public function __serialize() : array{}
 

@@ -65,6 +65,27 @@ function testArrayVsSingleSymmetry(array $samples, \Closure $readMethod, \Closur
 	echo "--- single vs array symmetry: match = " . ($samples === $decodedSingles ? "YES" : "NO") . "\n";
 }
 
+function testPackVsNormalSymmetry(array $samples, \Closure $readMethod, \Closure $writeMethod, \Closure $unpackMethod, \Closure $packMethod) : void{
+	echo "--- single pack vs buffer read symmetry ---\n";
+	foreach($samples as $sample){
+		$packed = $packMethod($sample);
+
+		$reader = new ByteBufferReader($packed);
+		$decoded = $readMethod($reader);
+
+		echo "($sample): match = " . ($sample === $decoded ? "YES" : "NO") . "\n";
+	}
+	echo "--- single buffer write vs unpack symmetry ---\n";
+	foreach($samples as $sample){
+		$writer = new ByteBufferWriter();
+		$writeMethod($writer, $sample);
+
+		$data = $writer->getData();
+		$decoded = $unpackMethod($data);
+		echo "($sample): match = " . ($sample === $decoded ? "YES" : "NO") . "\n";
+	}
+}
+
 /**
  * @phpstan-template TValue
  * @phpstan-param TValue[] $samples
@@ -72,10 +93,13 @@ function testArrayVsSingleSymmetry(array $samples, \Closure $readMethod, \Closur
  * @phpstan-param \Closure(ByteBufferWriter,TValue):void $writeMethod
  * @phpstan-param \Closure(ByteBufferReader,int):array<TValue> $readArrayMethod
  * @phpstan-param \Closure(ByteBufferWriter,array<TValue>):void $writeArrayMethod
+ * @phpstan-param \Closure(string):TValue $unpackMethod
+ * @phpstan-param \Closure(TValue):string $packMethod
  */
-function testFullSymmetry(string $label, array $samples, \Closure $readMethod, \Closure $writeMethod, \Closure $readArrayMethod, \Closure $writeArrayMethod) : void{
+function testFullSymmetry(string $label, array $samples, \Closure $readMethod, \Closure $writeMethod, \Closure $readArrayMethod, \Closure $writeArrayMethod, \Closure $unpackMethod, \Closure $packMethod) : void{
 	echo "########## TEST " . $label . " ##########\n";
 	testSingleSymmetry($samples, $readMethod, $writeMethod);
+	testPackVsNormalSymmetry($samples, $readMethod, $writeMethod, $unpackMethod, $packMethod);
 	testArraySymmetry($samples, $readArrayMethod, $writeArrayMethod);
 	testArrayVsSingleSymmetry($samples, $readMethod, $writeMethod, $readArrayMethod, $writeArrayMethod);
 	echo "########## END TEST " . $label . " ##########\n\n";

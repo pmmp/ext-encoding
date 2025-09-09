@@ -54,19 +54,19 @@ enum EndianInts{
 	}
 
 	/**
-	 * @phpstan-return array{\Closure(ByteBufferReader):int, Closure(ByteBufferWriter,int):void, Closure(ByteBufferReader,int):array<int>, Closure(ByteBufferWriter,array<int>):void}
+	 * @phpstan-return array{\Closure(ByteBufferReader):int, \Closure(ByteBufferWriter,int):void, Closure(ByteBufferReader,int):array<int>, Closure(ByteBufferWriter,array<int>):void, Closure(int):string, Closure(string):int}
 	 */
 	function getMethods(bool $bigEndian) : array{
 		$class = $bigEndian ? BE::class : LE::class;
 		return match($this){
-			self::UNSIGNED_SHORT => [$class::readUnsignedShort(...), $class::writeUnsignedShort(...), $class::readUnsignedShortArray(...), $class::writeUnsignedShortArray(...)],
-			self::SIGNED_SHORT => [$class::readSignedShort(...), $class::writeSignedShort(...), $class::readSignedShortArray(...), $class::writeSignedShortArray(...)],
-			self::UNSIGNED_TRIAD => [$class::readUnsignedTriad(...), $class::writeUnsignedTriad(...), $class::readUnsignedTriadArray(...), $class::writeUnsignedTriadArray(...)],
-			self::SIGNED_TRIAD => [$class::readSignedTriad(...), $class::writeSignedTriad(...), $class::readSignedTriadArray(...), $class::writeSignedTriadArray(...)],
-			self::UNSIGNED_INT => [$class::readUnsignedInt(...), $class::writeUnsignedInt(...), $class::readUnsignedIntArray(...), $class::writeUnsignedIntArray(...)],
-			self::SIGNED_INT => [$class::readSignedInt(...), $class::writeSignedInt(...), $class::readSignedIntArray(...), $class::writeSignedIntArray(...)],
-			self::UNSIGNED_LONG => [$class::readUnsignedLong(...), $class::writeUnsignedLong(...), $class::readUnsignedLongArray(...), $class::writeUnsignedLongArray(...)],
-			self::SIGNED_LONG => [$class::readSignedLong(...), $class::writeSignedLong(...), $class::readSignedLongArray(...), $class::writeSignedLongArray(...)],
+			self::UNSIGNED_SHORT => [$class::readUnsignedShort(...), $class::writeUnsignedShort(...), $class::readUnsignedShortArray(...), $class::writeUnsignedShortArray(...), $class::unpackUnsignedShort(...), $class::packUnsignedShort(...)],
+			self::SIGNED_SHORT => [$class::readSignedShort(...), $class::writeSignedShort(...), $class::readSignedShortArray(...), $class::writeSignedShortArray(...), $class::unpackSignedShort(...), $class::packSignedShort(...)],
+			self::UNSIGNED_TRIAD => [$class::readUnsignedTriad(...), $class::writeUnsignedTriad(...), $class::readUnsignedTriadArray(...), $class::writeUnsignedTriadArray(...), $class::unpackUnsignedTriad(...), $class::packUnsignedTriad(...)],
+			self::SIGNED_TRIAD => [$class::readSignedTriad(...), $class::writeSignedTriad(...), $class::readSignedTriadArray(...), $class::writeSignedTriadArray(...), $class::unpackSignedTriad(...), $class::packSignedTriad(...)],
+			self::UNSIGNED_INT => [$class::readUnsignedInt(...), $class::writeUnsignedInt(...), $class::readUnsignedIntArray(...), $class::writeUnsignedIntArray(...), $class::unpackUnsignedInt(...), $class::packUnsignedInt(...)],
+			self::SIGNED_INT => [$class::readSignedInt(...), $class::writeSignedInt(...), $class::readSignedIntArray(...), $class::writeSignedIntArray(...), $class::unpackSignedInt(...), $class::packSignedInt(...)],
+			self::UNSIGNED_LONG => [$class::readUnsignedLong(...), $class::writeUnsignedLong(...), $class::readUnsignedLongArray(...), $class::writeUnsignedLongArray(...), $class::unpackUnsignedLong(...), $class::packUnsignedLong(...)],
+			self::SIGNED_LONG => [$class::readSignedLong(...), $class::writeSignedLong(...), $class::readSignedLongArray(...), $class::writeSignedLongArray(...), $class::unpackSignedLong(...), $class::packSignedLong(...)],
 		};
 	}
 }
@@ -75,11 +75,14 @@ enum FloatSamples{
 	case FLOAT;
 	case DOUBLE;
 
+	/**
+	 * @phpstan-return array{\Closure(ByteBufferReader):float, \Closure(ByteBufferWriter,float):void, Closure(ByteBufferReader,int):array<float>, Closure(ByteBufferWriter,array<float>):void, Closure(float):string, Closure(string):float}
+	 */
 	public function getMethods(bool $bigEndian) : array{
 		$class = $bigEndian ? BE::class : LE::class;
 		return match($this){
-			self::FLOAT => [$class::readFloat(...), $class::writeFloat(...), $class::readFloatArray(...), $class::writeFloatArray(...)],
-			self::DOUBLE => [$class::readDouble(...), $class::writeDouble(...), $class::readDoubleArray(...), $class::writeDoubleArray(...)],
+			self::FLOAT => [$class::readFloat(...), $class::writeFloat(...), $class::readFloatArray(...), $class::writeFloatArray(...), $class::unpackFloat(...), $class::packFloat(...)],
+			self::DOUBLE => [$class::readDouble(...), $class::writeDouble(...), $class::readDoubleArray(...), $class::writeDoubleArray(...), $class::unpackDouble(...), $class::packDouble(...)],
 		};
 	}
 }

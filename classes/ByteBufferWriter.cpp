@@ -12,10 +12,10 @@ static zend_object_handlers byte_buffer_writer_zend_object_handlers;
 zend_class_entry* byte_buffer_writer_ce;
 
 static void writer_init_properties(byte_buffer_writer_zend_object* object, zend_string* buffer, size_t used, size_t offset) {
-	object->buffer = buffer;
+	object->writer.buffer = buffer;
 	zend_string_addref(buffer);
-	object->offset = offset;
-	object->used = used;
+	object->writer.offset = offset;
+	object->writer.used = used;
 }
 
 static zend_object* writer_new(zend_class_entry* ce) {
@@ -32,7 +32,7 @@ static zend_object* writer_clone(zend_object* object) {
 
 	zend_objects_clone_members(&new_object->std, &old_object->std);
 
-	writer_init_properties(new_object, old_object->buffer, old_object->used, old_object->offset);
+	writer_init_properties(new_object, old_object->writer.buffer, old_object->writer.used, old_object->writer.offset);
 
 	return &new_object->std;
 }
@@ -40,7 +40,7 @@ static zend_object* writer_clone(zend_object* object) {
 static void writer_free(zend_object* std) {
 	auto object = fetch_from_zend_object<byte_buffer_writer_zend_object>(std);
 
-	zend_string_release_ex(object->buffer, 0);
+	zend_string_release_ex(object->writer.buffer, 0);
 }
 
 static int writer_compare_objects(zval* obj1, zval* obj2) {
@@ -50,9 +50,9 @@ static int writer_compare_objects(zval* obj1, zval* obj2) {
 			auto object2 = fetch_from_zend_object<byte_buffer_writer_zend_object>(Z_OBJ_P(obj2));
 
 			if (
-				object1->offset == object2->offset &&
-				object1->used == object2->used &&
-				zend_string_equals(object1->buffer, object2->buffer)
+				object1->writer.offset == object2->writer.offset &&
+				object1->writer.used == object2->writer.used &&
+				zend_string_equals(object1->writer.buffer, object2->writer.buffer)
 				) {
 				return 0;
 			}
@@ -74,8 +74,8 @@ WRITER_METHOD(__construct) {
 	ZEND_PARSE_PARAMETERS_END();
 
 	object = WRITER_THIS();
-	if (object->buffer) {
-		zend_string_release_ex(object->buffer, 0);
+	if (object->writer.buffer) {
+		zend_string_release_ex(object->writer.buffer, 0);
 	}
 
 	if (buffer == NULL) {
@@ -90,7 +90,7 @@ WRITER_METHOD(getData) {
 	zend_parse_parameters_none_throw();
 
 	auto object = WRITER_THIS();
-	RETURN_STRINGL(ZSTR_VAL(object->buffer), object->used);
+	RETURN_STRINGL(ZSTR_VAL(object->writer.buffer), object->writer.used);
 }
 
 WRITER_METHOD(writeByteArray) {
@@ -106,18 +106,18 @@ WRITER_METHOD(writeByteArray) {
 
 	auto size = ZSTR_LEN(value);
 
-	extendBuffer(object->buffer, object->offset, size);
-	memcpy(ZSTR_VAL(object->buffer) + object->offset, ZSTR_VAL(value), size);
-	object->offset += size;
-	if (object->offset > object->used) {
-		object->used = object->offset;
+	extendBuffer(object->writer.buffer, object->writer.offset, size);
+	memcpy(ZSTR_VAL(object->writer.buffer) + object->writer.offset, ZSTR_VAL(value), size);
+	object->writer.offset += size;
+	if (object->writer.offset > object->writer.used) {
+		object->writer.used = object->writer.offset;
 	}
 }
 
 WRITER_METHOD(getOffset) {
 	zend_parse_parameters_none_throw();
 	auto object = WRITER_THIS();
-	RETURN_LONG(object->offset);
+	RETURN_LONG(object->writer.offset);
 }
 
 WRITER_METHOD(setOffset) {
@@ -128,26 +128,26 @@ WRITER_METHOD(setOffset) {
 	ZEND_PARSE_PARAMETERS_END();
 
 	auto object = WRITER_THIS();
-	if (offset < 0 || static_cast<size_t>(offset) > object->used) {
+	if (offset < 0 || static_cast<size_t>(offset) > object->writer.used) {
 		zend_value_error("Offset must not be less than zero or greater than the buffer size");
 		return;
 	}
 
-	object->offset = static_cast<size_t>(offset);
+	object->writer.offset = static_cast<size_t>(offset);
 }
 
 WRITER_METHOD(getUsedLength) {
 	zend_parse_parameters_none_throw();
 
 	auto object = WRITER_THIS();
-	RETURN_LONG(object->used);
+	RETURN_LONG(object->writer.used);
 }
 
 WRITER_METHOD(getReservedLength) {
 	zend_parse_parameters_none_throw();
 
 	auto object = WRITER_THIS();
-	RETURN_LONG(ZSTR_LEN(object->buffer));
+	RETURN_LONG(ZSTR_LEN(object->writer.buffer));
 }
 
 WRITER_METHOD(reserve) {
@@ -162,15 +162,15 @@ WRITER_METHOD(reserve) {
 		return;
 	}
 	auto object = WRITER_THIS();
-	extendBuffer(object->buffer, static_cast<size_t>(zlength), 0);
+	extendBuffer(object->writer.buffer, static_cast<size_t>(zlength), 0);
 }
 
 WRITER_METHOD(trim) {
 	zend_parse_parameters_none_throw();
 
 	auto object = WRITER_THIS();
-	if (ZSTR_LEN(object->buffer) > object->used) {
-		object->buffer = zend_string_truncate(object->buffer, object->used, 0);
+	if (ZSTR_LEN(object->writer.buffer) > object->writer.used) {
+		object->writer.buffer = zend_string_truncate(object->writer.buffer, object->writer.used, 0);
 	}
 }
 
@@ -178,8 +178,8 @@ WRITER_METHOD(clear) {
 	zend_parse_parameters_none_throw();
 
 	auto object = WRITER_THIS();
-	object->offset = 0;
-	object->used = 0;
+	object->writer.offset = 0;
+	object->writer.used = 0;
 }
 
 WRITER_METHOD(__serialize) {
@@ -189,8 +189,8 @@ WRITER_METHOD(__serialize) {
 	array_init(return_value);
 
 	//don't return the writer buffer directly - it may have uninitialized reserved memory
-	add_assoc_stringl(return_value, "buffer", ZSTR_VAL(object->buffer), object->used);
-	add_assoc_long(return_value, "offset", object->offset);
+	add_assoc_stringl(return_value, "buffer", ZSTR_VAL(object->writer.buffer), object->writer.used);
+	add_assoc_long(return_value, "offset", object->writer.offset);
 }
 
 static zval* fetch_serialized_property(HashTable* data, const char* name, int type) {
@@ -235,8 +235,8 @@ WRITER_METHOD(__debugInfo) {
 	array_init(return_value);
 
 	//don't return the writer buffer directly - it may have uninitialized reserved memory
-	add_assoc_stringl(return_value, "buffer", ZSTR_VAL(object->buffer), object->used);
-	add_assoc_long(return_value, "offset", object->offset);
+	add_assoc_stringl(return_value, "buffer", ZSTR_VAL(object->writer.buffer), object->writer.used);
+	add_assoc_long(return_value, "offset", object->writer.offset);
 }
 
 zend_class_entry* init_class_ByteBufferWriter(void) {

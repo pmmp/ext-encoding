@@ -12,9 +12,9 @@ static zend_object_handlers byte_buffer_reader_zend_object_handlers;
 zend_class_entry* byte_buffer_reader_ce;
 
 static void reader_init_properties(byte_buffer_reader_zend_object* object, zend_string* buffer, size_t offset) {
-	object->buffer = buffer;
+	object->reader.buffer = buffer;
 	zend_string_addref(buffer);
-	object->offset = offset;
+	object->reader.offset = offset;
 }
 
 static zend_object* reader_new(zend_class_entry* ce) {
@@ -31,7 +31,7 @@ static zend_object* reader_clone(zend_object* object) {
 
 	zend_objects_clone_members(&new_object->std, &old_object->std);
 
-	reader_init_properties(new_object, old_object->buffer, old_object->offset);
+	reader_init_properties(new_object, old_object->reader.buffer, old_object->reader.offset);
 
 	return &new_object->std;
 }
@@ -39,7 +39,7 @@ static zend_object* reader_clone(zend_object* object) {
 static void reader_free(zend_object* std) {
 	auto object = fetch_from_zend_object<byte_buffer_reader_zend_object>(std);
 
-	zend_string_release_ex(object->buffer, 0);
+	zend_string_release_ex(object->reader.buffer, 0);
 }
 
 static int reader_compare_objects(zval* obj1, zval* obj2) {
@@ -49,8 +49,8 @@ static int reader_compare_objects(zval* obj1, zval* obj2) {
 			auto object2 = fetch_from_zend_object<byte_buffer_reader_zend_object>(Z_OBJ_P(obj2));
 
 			if (
-				object1->offset == object2->offset &&
-				zend_string_equals(object1->buffer, object2->buffer)
+				object1->reader.offset == object2->reader.offset &&
+				zend_string_equals(object1->reader.buffer, object2->reader.buffer)
 				) {
 				return 0;
 			}
@@ -71,8 +71,8 @@ READER_METHOD(__construct) {
 	ZEND_PARSE_PARAMETERS_END();
 
 	object = READER_THIS();
-	if (object->buffer) {
-		zend_string_release_ex(object->buffer, 0);
+	if (object->reader.buffer) {
+		zend_string_release_ex(object->reader.buffer, 0);
 	}
 
 	reader_init_properties(object, buffer, 0);
@@ -82,7 +82,7 @@ READER_METHOD(getData) {
 	zend_parse_parameters_none_throw();
 
 	auto object = READER_THIS();
-	RETURN_STR_COPY(object->buffer);
+	RETURN_STR_COPY(object->reader.buffer);
 }
 
 READER_METHOD(readByteArray) {
@@ -105,19 +105,19 @@ READER_METHOD(readByteArray) {
 
 	object = READER_THIS();
 
-	if (ZSTR_LEN(object->buffer) - object->offset < length) {
-		zend_throw_exception_ex(data_decode_exception_ce, 0, "Need at least %zu bytes, but only have %zu bytes", length, ZSTR_LEN(object->buffer) - object->offset);
+	if (ZSTR_LEN(object->reader.buffer) - object->reader.offset < length) {
+		zend_throw_exception_ex(data_decode_exception_ce, 0, "Need at least %zu bytes, but only have %zu bytes", length, ZSTR_LEN(object->reader.buffer) - object->reader.offset);
 		return;
 	}
 
-	RETVAL_STRINGL(ZSTR_VAL(object->buffer) + object->offset, length);
-	object->offset += length;
+	RETVAL_STRINGL(ZSTR_VAL(object->reader.buffer) + object->reader.offset, length);
+	object->reader.offset += length;
 }
 
 READER_METHOD(getOffset) {
 	zend_parse_parameters_none_throw();
 	auto object = READER_THIS();
-	RETURN_LONG(object->offset);
+	RETURN_LONG(object->reader.offset);
 }
 
 READER_METHOD(setOffset) {
@@ -128,19 +128,19 @@ READER_METHOD(setOffset) {
 	ZEND_PARSE_PARAMETERS_END();
 
 	auto object = READER_THIS();
-	if (offset < 0 || static_cast<size_t>(offset) > ZSTR_LEN(object->buffer)) {
+	if (offset < 0 || static_cast<size_t>(offset) > ZSTR_LEN(object->reader.buffer)) {
 		zend_value_error("Offset must not be less than zero or greater than the available data size");
 		return;
 	}
 
-	object->offset = static_cast<size_t>(offset);
+	object->reader.offset = static_cast<size_t>(offset);
 }
 
 READER_METHOD(getUnreadLength) {
 	zend_parse_parameters_none_throw();
 
 	auto object = READER_THIS();
-	RETURN_LONG(ZSTR_LEN(object->buffer) - object->offset);
+	RETURN_LONG(ZSTR_LEN(object->reader.buffer) - object->reader.offset);
 }
 
 READER_METHOD(__serialize) {
@@ -148,9 +148,9 @@ READER_METHOD(__serialize) {
 
 	auto object = READER_THIS();
 	array_init(return_value);
-	zend_string_addref(object->buffer);
-	add_assoc_str(return_value, "buffer", object->buffer);
-	add_assoc_long(return_value, "offset", object->offset);
+	zend_string_addref(object->reader.buffer);
+	add_assoc_str(return_value, "buffer", object->reader.buffer);
+	add_assoc_long(return_value, "offset", object->reader.offset);
 }
 
 static zval* fetch_serialized_property(HashTable* data, const char* name, int type) {
@@ -193,9 +193,9 @@ READER_METHOD(__debugInfo) {
 
 	auto object = READER_THIS();
 	array_init(return_value);
-	zend_string_addref(object->buffer);
-	add_assoc_str(return_value, "buffer", object->buffer);
-	add_assoc_long(return_value, "offset", object->offset);
+	zend_string_addref(object->reader.buffer);
+	add_assoc_str(return_value, "buffer", object->reader.buffer);
+	add_assoc_long(return_value, "offset", object->reader.offset);
 }
 
 zend_class_entry* init_class_ByteBufferReader(void) {

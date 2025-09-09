@@ -11,11 +11,11 @@ require __DIR__ . '/symmetry-tests.inc';
 
 //these have no array equivalents
 echo "########## TEST unsigned byte ##########\n";
-testSingleSymmetry([0, 1, 127, 128, 254, 255], Byte::readUnsigned(...), Byte::writeUnsigned(...));
+testSingleSymmetry([0, 1, 127, 128, 254, 255], Byte::readUnsigned(...), Byte::writeUnsigned(...), Byte::unpackUnsigned(...), Byte::packUnsigned(...));
 echo "########## END TEST unsigned byte ##########\n\n";
 
 echo "########## TEST signed byte ##########\n";
-testSingleSymmetry([-128, -1, 0, 1, 126, 127], Byte::readSigned(...), Byte::writeSigned(...));
+testSingleSymmetry([-128, -1, 0, 1, 126, 127], Byte::readSigned(...), Byte::writeSigned(...), Byte::unpackSigned(...), Byte::packSigned(...));
 echo "########## END TEST signed byte ##########\n\n";
 
 foreach(EndianInts::cases() as $case){
@@ -32,10 +32,10 @@ foreach(FloatSamples::cases() as $case){
 	testFullSymmetry("little endian " . $case->name, $samples, ...$case->getMethods(false));
 }
 
-testFullSymmetry("varint", EndianInts::UNSIGNED_INT->getSamples(), VarInt::readUnsignedInt(...), VarInt::writeUnsignedInt(...), VarInt::readUnsignedIntArray(...), VarInt::writeUnsignedIntArray(...));
-testFullSymmetry("varint zigzag", EndianInts::SIGNED_INT->getSamples(), VarInt::readSignedInt(...), VarInt::writeSignedInt(...), VarInt::readSignedIntArray(...), VarInt::writeSignedIntArray(...));
-testFullSymmetry("varlong", EndianInts::UNSIGNED_LONG->getSamples(), VarInt::readUnsignedLong(...), VarInt::writeUnsignedLong(...), VarInt::readUnsignedLongArray(...), VarInt::writeUnsignedLongArray(...));
-testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt::readSignedLong(...), VarInt::writeSignedLong(...), VarInt::readSignedLongArray(...), VarInt::writeSignedLongArray(...));
+testFullSymmetry("varint", EndianInts::UNSIGNED_INT->getSamples(), VarInt::readUnsignedInt(...), VarInt::writeUnsignedInt(...), VarInt::readUnsignedIntArray(...), VarInt::writeUnsignedIntArray(...), VarInt::unpackUnsignedInt(...), VarInt::packUnsignedInt(...));
+testFullSymmetry("varint zigzag", EndianInts::SIGNED_INT->getSamples(), VarInt::readSignedInt(...), VarInt::writeSignedInt(...), VarInt::readSignedIntArray(...), VarInt::writeSignedIntArray(...), VarInt::unpackSignedInt(...), VarInt::packSignedInt(...));
+testFullSymmetry("varlong", EndianInts::UNSIGNED_LONG->getSamples(), VarInt::readUnsignedLong(...), VarInt::writeUnsignedLong(...), VarInt::readUnsignedLongArray(...), VarInt::writeUnsignedLongArray(...), VarInt::unpackUnsignedLong(...), VarInt::packUnsignedLong(...));
+testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt::readSignedLong(...), VarInt::writeSignedLong(...), VarInt::readSignedLongArray(...), VarInt::writeSignedLongArray(...), VarInt::unpackSignedLong(...), VarInt::packSignedLong(...));
 ?>
 --EXPECT--
 ########## TEST unsigned byte ##########
@@ -64,6 +64,16 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (65534): match = YES
 (65535): match = YES
+--- single pack vs buffer read symmetry ---
+(0): match = YES
+(1): match = YES
+(65534): match = YES
+(65535): match = YES
+--- single buffer write vs unpack symmetry ---
+(0): match = YES
+(1): match = YES
+(65534): match = YES
+(65535): match = YES
 --- array symmetry: match = YES
 --- array vs single symmetry: match = YES
 --- single vs array symmetry: match = YES
@@ -75,6 +85,16 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (65534): match = YES
 (65535): match = YES
+--- single pack vs buffer read symmetry ---
+(0): match = YES
+(1): match = YES
+(65534): match = YES
+(65535): match = YES
+--- single buffer write vs unpack symmetry ---
+(0): match = YES
+(1): match = YES
+(65534): match = YES
+(65535): match = YES
 --- array symmetry: match = YES
 --- array vs single symmetry: match = YES
 --- single vs array symmetry: match = YES
@@ -82,6 +102,22 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 
 ########## TEST big endian SIGNED_SHORT ##########
 --- single read symmetry ---
+(-32768): match = YES
+(-32767): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(32766): match = YES
+(32767): match = YES
+--- single pack vs buffer read symmetry ---
+(-32768): match = YES
+(-32767): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(32766): match = YES
+(32767): match = YES
+--- single buffer write vs unpack symmetry ---
 (-32768): match = YES
 (-32767): match = YES
 (-1): match = YES
@@ -103,6 +139,22 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (32766): match = YES
 (32767): match = YES
+--- single pack vs buffer read symmetry ---
+(-32768): match = YES
+(-32767): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(32766): match = YES
+(32767): match = YES
+--- single buffer write vs unpack symmetry ---
+(-32768): match = YES
+(-32767): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(32766): match = YES
+(32767): match = YES
 --- array symmetry: match = YES
 --- array vs single symmetry: match = YES
 --- single vs array symmetry: match = YES
@@ -110,6 +162,16 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 
 ########## TEST big endian UNSIGNED_TRIAD ##########
 --- single read symmetry ---
+(0): match = YES
+(1): match = YES
+(16777214): match = YES
+(16777215): match = YES
+--- single pack vs buffer read symmetry ---
+(0): match = YES
+(1): match = YES
+(16777214): match = YES
+(16777215): match = YES
+--- single buffer write vs unpack symmetry ---
 (0): match = YES
 (1): match = YES
 (16777214): match = YES
@@ -125,6 +187,16 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (16777214): match = YES
 (16777215): match = YES
+--- single pack vs buffer read symmetry ---
+(0): match = YES
+(1): match = YES
+(16777214): match = YES
+(16777215): match = YES
+--- single buffer write vs unpack symmetry ---
+(0): match = YES
+(1): match = YES
+(16777214): match = YES
+(16777215): match = YES
 --- array symmetry: match = YES
 --- array vs single symmetry: match = YES
 --- single vs array symmetry: match = YES
@@ -132,6 +204,22 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 
 ########## TEST big endian SIGNED_TRIAD ##########
 --- single read symmetry ---
+(-8388608): match = YES
+(-8388607): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(8388606): match = YES
+(8388607): match = YES
+--- single pack vs buffer read symmetry ---
+(-8388608): match = YES
+(-8388607): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(8388606): match = YES
+(8388607): match = YES
+--- single buffer write vs unpack symmetry ---
 (-8388608): match = YES
 (-8388607): match = YES
 (-1): match = YES
@@ -153,6 +241,22 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (8388606): match = YES
 (8388607): match = YES
+--- single pack vs buffer read symmetry ---
+(-8388608): match = YES
+(-8388607): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(8388606): match = YES
+(8388607): match = YES
+--- single buffer write vs unpack symmetry ---
+(-8388608): match = YES
+(-8388607): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(8388606): match = YES
+(8388607): match = YES
 --- array symmetry: match = YES
 --- array vs single symmetry: match = YES
 --- single vs array symmetry: match = YES
@@ -160,6 +264,16 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 
 ########## TEST big endian UNSIGNED_INT ##########
 --- single read symmetry ---
+(0): match = YES
+(1): match = YES
+(4294967294): match = YES
+(4294967295): match = YES
+--- single pack vs buffer read symmetry ---
+(0): match = YES
+(1): match = YES
+(4294967294): match = YES
+(4294967295): match = YES
+--- single buffer write vs unpack symmetry ---
 (0): match = YES
 (1): match = YES
 (4294967294): match = YES
@@ -175,6 +289,16 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (4294967294): match = YES
 (4294967295): match = YES
+--- single pack vs buffer read symmetry ---
+(0): match = YES
+(1): match = YES
+(4294967294): match = YES
+(4294967295): match = YES
+--- single buffer write vs unpack symmetry ---
+(0): match = YES
+(1): match = YES
+(4294967294): match = YES
+(4294967295): match = YES
 --- array symmetry: match = YES
 --- array vs single symmetry: match = YES
 --- single vs array symmetry: match = YES
@@ -182,6 +306,22 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 
 ########## TEST big endian SIGNED_INT ##########
 --- single read symmetry ---
+(-2147483648): match = YES
+(-2147483647): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(2147483646): match = YES
+(2147483647): match = YES
+--- single pack vs buffer read symmetry ---
+(-2147483648): match = YES
+(-2147483647): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(2147483646): match = YES
+(2147483647): match = YES
+--- single buffer write vs unpack symmetry ---
 (-2147483648): match = YES
 (-2147483647): match = YES
 (-1): match = YES
@@ -203,6 +343,22 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (2147483646): match = YES
 (2147483647): match = YES
+--- single pack vs buffer read symmetry ---
+(-2147483648): match = YES
+(-2147483647): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(2147483646): match = YES
+(2147483647): match = YES
+--- single buffer write vs unpack symmetry ---
+(-2147483648): match = YES
+(-2147483647): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(2147483646): match = YES
+(2147483647): match = YES
 --- array symmetry: match = YES
 --- array vs single symmetry: match = YES
 --- single vs array symmetry: match = YES
@@ -210,6 +366,22 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 
 ########## TEST big endian UNSIGNED_LONG ##########
 --- single read symmetry ---
+(-9223372036854775808): match = YES
+(-9223372036854775807): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(9223372036854775806): match = YES
+(9223372036854775807): match = YES
+--- single pack vs buffer read symmetry ---
+(-9223372036854775808): match = YES
+(-9223372036854775807): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(9223372036854775806): match = YES
+(9223372036854775807): match = YES
+--- single buffer write vs unpack symmetry ---
 (-9223372036854775808): match = YES
 (-9223372036854775807): match = YES
 (-1): match = YES
@@ -231,6 +403,22 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (9223372036854775806): match = YES
 (9223372036854775807): match = YES
+--- single pack vs buffer read symmetry ---
+(-9223372036854775808): match = YES
+(-9223372036854775807): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(9223372036854775806): match = YES
+(9223372036854775807): match = YES
+--- single buffer write vs unpack symmetry ---
+(-9223372036854775808): match = YES
+(-9223372036854775807): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(9223372036854775806): match = YES
+(9223372036854775807): match = YES
 --- array symmetry: match = YES
 --- array vs single symmetry: match = YES
 --- single vs array symmetry: match = YES
@@ -238,6 +426,22 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 
 ########## TEST big endian SIGNED_LONG ##########
 --- single read symmetry ---
+(-9223372036854775808): match = YES
+(-9223372036854775807): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(9223372036854775806): match = YES
+(9223372036854775807): match = YES
+--- single pack vs buffer read symmetry ---
+(-9223372036854775808): match = YES
+(-9223372036854775807): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(9223372036854775806): match = YES
+(9223372036854775807): match = YES
+--- single buffer write vs unpack symmetry ---
 (-9223372036854775808): match = YES
 (-9223372036854775807): match = YES
 (-1): match = YES
@@ -259,6 +463,22 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (9223372036854775806): match = YES
 (9223372036854775807): match = YES
+--- single pack vs buffer read symmetry ---
+(-9223372036854775808): match = YES
+(-9223372036854775807): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(9223372036854775806): match = YES
+(9223372036854775807): match = YES
+--- single buffer write vs unpack symmetry ---
+(-9223372036854775808): match = YES
+(-9223372036854775807): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(9223372036854775806): match = YES
+(9223372036854775807): match = YES
 --- array symmetry: match = YES
 --- array vs single symmetry: match = YES
 --- single vs array symmetry: match = YES
@@ -266,6 +486,18 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 
 ########## TEST big endian FLOAT ##########
 --- single read symmetry ---
+(-1.5): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(1.5): match = YES
+--- single pack vs buffer read symmetry ---
+(-1.5): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(1.5): match = YES
+--- single buffer write vs unpack symmetry ---
 (-1.5): match = YES
 (-1): match = YES
 (0): match = YES
@@ -283,6 +515,18 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (0): match = YES
 (1): match = YES
 (1.5): match = YES
+--- single pack vs buffer read symmetry ---
+(-1.5): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(1.5): match = YES
+--- single buffer write vs unpack symmetry ---
+(-1.5): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(1.5): match = YES
 --- array symmetry: match = YES
 --- array vs single symmetry: match = YES
 --- single vs array symmetry: match = YES
@@ -290,6 +534,18 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 
 ########## TEST big endian DOUBLE ##########
 --- single read symmetry ---
+(-1.5): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(1.5): match = YES
+--- single pack vs buffer read symmetry ---
+(-1.5): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(1.5): match = YES
+--- single buffer write vs unpack symmetry ---
 (-1.5): match = YES
 (-1): match = YES
 (0): match = YES
@@ -307,6 +563,18 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (0): match = YES
 (1): match = YES
 (1.5): match = YES
+--- single pack vs buffer read symmetry ---
+(-1.5): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(1.5): match = YES
+--- single buffer write vs unpack symmetry ---
+(-1.5): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(1.5): match = YES
 --- array symmetry: match = YES
 --- array vs single symmetry: match = YES
 --- single vs array symmetry: match = YES
@@ -318,6 +586,16 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (4294967294): match = YES
 (4294967295): match = YES
+--- single pack vs buffer read symmetry ---
+(0): match = YES
+(1): match = YES
+(4294967294): match = YES
+(4294967295): match = YES
+--- single buffer write vs unpack symmetry ---
+(0): match = YES
+(1): match = YES
+(4294967294): match = YES
+(4294967295): match = YES
 --- array symmetry: match = YES
 --- array vs single symmetry: match = YES
 --- single vs array symmetry: match = YES
@@ -325,6 +603,22 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 
 ########## TEST varint zigzag ##########
 --- single read symmetry ---
+(-2147483648): match = YES
+(-2147483647): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(2147483646): match = YES
+(2147483647): match = YES
+--- single pack vs buffer read symmetry ---
+(-2147483648): match = YES
+(-2147483647): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(2147483646): match = YES
+(2147483647): match = YES
+--- single buffer write vs unpack symmetry ---
 (-2147483648): match = YES
 (-2147483647): match = YES
 (-1): match = YES
@@ -346,6 +640,22 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 (1): match = YES
 (9223372036854775806): match = YES
 (9223372036854775807): match = YES
+--- single pack vs buffer read symmetry ---
+(-9223372036854775808): match = YES
+(-9223372036854775807): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(9223372036854775806): match = YES
+(9223372036854775807): match = YES
+--- single buffer write vs unpack symmetry ---
+(-9223372036854775808): match = YES
+(-9223372036854775807): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(9223372036854775806): match = YES
+(9223372036854775807): match = YES
 --- array symmetry: match = YES
 --- array vs single symmetry: match = YES
 --- single vs array symmetry: match = YES
@@ -353,6 +663,22 @@ testFullSymmetry("varlong zigzag", EndianInts::SIGNED_LONG->getSamples(), VarInt
 
 ########## TEST varlong zigzag ##########
 --- single read symmetry ---
+(-9223372036854775808): match = YES
+(-9223372036854775807): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(9223372036854775806): match = YES
+(9223372036854775807): match = YES
+--- single pack vs buffer read symmetry ---
+(-9223372036854775808): match = YES
+(-9223372036854775807): match = YES
+(-1): match = YES
+(0): match = YES
+(1): match = YES
+(9223372036854775806): match = YES
+(9223372036854775807): match = YES
+--- single buffer write vs unpack symmetry ---
 (-9223372036854775808): match = YES
 (-9223372036854775807): match = YES
 (-1): match = YES

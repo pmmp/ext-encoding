@@ -6,10 +6,14 @@ extern "C" {
 }
 #include "../ZendUtil.h"
 
-typedef struct _byte_buffer_writer_zend_object {
+typedef struct _byte_buffer_writer_t {
 	zend_string* buffer;
 	size_t offset;
 	size_t used;
+} byte_buffer_writer_t;
+
+typedef struct _byte_buffer_writer_zend_object {
+	byte_buffer_writer_t writer;
 	zend_object std;
 } byte_buffer_writer_zend_object;
 

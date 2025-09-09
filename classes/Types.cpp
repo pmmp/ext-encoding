@@ -280,12 +280,17 @@ template<typename TValue>
 bool typeHashTableToArray(HashTable* valueArrayHt, std::vector<TValue>& valueArray, std::type_identity<double> zendType) {
 	zval* elementZv;
 	ZEND_HASH_FOREACH_VAL(valueArrayHt, elementZv) {
-		if (Z_TYPE_P(elementZv) != IS_DOUBLE) {
+		TValue value;
+		auto elementType = Z_TYPE_P(elementZv);
+		if (elementType == IS_DOUBLE) {
+			value = static_cast<TValue>(Z_DVAL_P(elementZv));
+		} else if (elementType == IS_LONG) {
+			value = static_cast<TValue>(Z_LVAL_P(elementZv));
+		} else {
 			//TODO: give the correct array key when strings are used - I don't know how to do this in a non-awkward way currently
 			zend_type_error("Array must contain only float, %s given at position %zu", zend_zval_type_name(elementZv), valueArray.size());
 			return false;
 		}
-		TValue value = static_cast<TValue>(Z_DVAL_P(elementZv));
 		valueArray.push_back(value);
 	} ZEND_HASH_FOREACH_END();
 	return true;

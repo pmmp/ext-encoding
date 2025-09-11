@@ -30,22 +30,7 @@ extern "C" {
 ARG_INFOS(zend_long, IS_LONG)
 ARG_INFOS(double, IS_DOUBLE)
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_read_array, 0, 2, IS_ARRAY, 0)
-ZEND_ARG_OBJ_INFO(0, buffer, pmmp\\encoding\\ByteBufferReader, 0)
-ZEND_ARG_TYPE_INFO(0, count, IS_LONG, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_write_array, 0, 2, IS_VOID, 0)
-ZEND_ARG_OBJ_INFO(0, buffer, pmmp\\encoding\\ByteBufferWriter, 0)
-ZEND_ARG_ARRAY_INFO(0, values, 0)
-ZEND_END_ARG_INFO()
-
-
 #if PHP_VERSION_ID >= 80400
-static const char* read_zend_long_array_doc_comment = "/**\n\t * @return int[]\n\t * @phpstan-return list<int>\n\t * @throws DataDecodeException\n\t */";
-static const char* read_double_array_doc_comment = "/**\n\t * @return float[]\n\t * @phpstan-return list<float>\n\t * @throws DataDecodeException\n\t */";
-static const char* write_zend_long_array_doc_comment = "/**\n\t * @param int[] $values\n\t * @phpstan-param list<int> $values\n\t */";
-static const char* write_double_array_doc_comment = "/**\n\t * @param float[] $values\n\t * @phpstan-param list<float> $values\n\t */";
 static const char* read_generic_doc_comment = "/** @throws DataDecodeException */";
 #endif
 
@@ -61,27 +46,6 @@ static inline void assignZval(zval* zv, TValue value, std::type_identity<zend_lo
 template<typename TValue>
 static inline void assignZval(zval* zv, TValue value, std::type_identity<double> zendType) {
 	ZVAL_DOUBLE(zv, value);
-}
-
-template<typename TValue, typename TZendValue>
-static inline void assignZvalArray(zval* zv, std::vector<TValue>& valueArray, std::type_identity<TZendValue> zendType) = delete;
-
-template<typename TValue>
-static inline void assignZvalArray(zval* zv, std::vector<TValue>& valueArray, std::type_identity<zend_long> zendType) {
-	array_init_size(zv, valueArray.size());
-
-	for (size_t i = 0; i < valueArray.size(); i++) {
-		add_next_index_long(zv, static_cast<zend_long>(valueArray[i]));
-	}
-}
-
-template<typename TValue>
-static inline void assignZvalArray(zval* zv, std::vector<TValue>& valueArray, std::type_identity<double> zendType) {
-	array_init_size(zv, valueArray.size());
-
-	for (size_t i = 0; i < valueArray.size(); i++) {
-		add_next_index_double(zv, static_cast<double>(valueArray[i]));
-	}
 }
 
 template<typename TValue>
@@ -122,36 +86,6 @@ void ZEND_FASTCALL zif_unpackType(INTERNAL_FUNCTION_PARAMETERS) {
 	reader.offset = 0;
 
 	readTypeCommon<TValue, readTypeFunc, TZendValue>(INTERNAL_FUNCTION_PARAM_PASSTHRU, reader);
-}
-
-
-template<typename TValue>
-using readTypeArrayFunc_t = bool (*) (unsigned char* bytes, size_t used, size_t& offset, size_t count, std::vector<TValue>& resultArray);
-
-template<typename TValue, readTypeArrayFunc_t<TValue> readTypeArray, typename TZendValue>
-void ZEND_FASTCALL zif_readTypeArray(INTERNAL_FUNCTION_PARAMETERS) {
-	zval* object_zv;
-	zend_long zcount;
-	byte_buffer_reader_zend_object* object;
-
-	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 2, 2)
-		Z_PARAM_OBJECT_OF_CLASS_EX(object_zv, byte_buffer_reader_ce, 0, 0)
-		Z_PARAM_LONG(zcount)
-	ZEND_PARSE_PARAMETERS_END_EX(return);
-
-	object = READER_FROM_ZVAL(object_zv);
-
-	if (zcount < 1) {
-		zend_value_error("Count must be at least 1");
-		return;
-	}
-	size_t count = static_cast<size_t>(zcount);
-
-	std::vector<TValue> resultArray;
-	auto bytes = reinterpret_cast<unsigned char*>(ZSTR_VAL(object->reader.buffer));
-	if (readTypeArray(bytes, ZSTR_LEN(object->reader.buffer), object->reader.offset, count, resultArray)) {
-		assignZvalArray(return_value, resultArray, std::type_identity<TZendValue>{});
-	}
 }
 
 //this must be reimplemented for any new zend types handled, because ZPP macros can't be easily templated
@@ -263,73 +197,6 @@ void ZEND_FASTCALL zif_packType(INTERNAL_FUNCTION_PARAMETERS) {
 	}
 }
 
-
-template<typename TValue, typename TZendValue>
-bool typeHashTableToArray(HashTable* valueArrayHt, std::vector<TValue>& valueArray, std::type_identity<TZendValue> zendType) = delete;
-
-template<typename TValue>
-bool typeHashTableToArray(HashTable* valueArrayHt, std::vector<TValue>& valueArray, std::type_identity<zend_long> zendType) {
-	zval* elementZv;
-	ZEND_HASH_FOREACH_VAL(valueArrayHt, elementZv) {
-		if (Z_TYPE_P(elementZv) != IS_LONG) {
-			//TODO: give the correct array key when strings are used - I don't know how to do this in a non-awkward way currently
-			zend_type_error("Array must contain only int, %s given at position %zu", zend_zval_type_name(elementZv), valueArray.size());
-			return false;
-		}
-		TValue value = static_cast<TValue>(Z_LVAL_P(elementZv));
-		valueArray.push_back(value);
-	} ZEND_HASH_FOREACH_END();
-	return true;
-}
-
-template<typename TValue>
-bool typeHashTableToArray(HashTable* valueArrayHt, std::vector<TValue>& valueArray, std::type_identity<double> zendType) {
-	zval* elementZv;
-	ZEND_HASH_FOREACH_VAL(valueArrayHt, elementZv) {
-		TValue value;
-		auto elementType = Z_TYPE_P(elementZv);
-		if (elementType == IS_DOUBLE) {
-			value = static_cast<TValue>(Z_DVAL_P(elementZv));
-		} else if (elementType == IS_LONG) {
-			value = static_cast<TValue>(Z_LVAL_P(elementZv));
-		} else {
-			//TODO: give the correct array key when strings are used - I don't know how to do this in a non-awkward way currently
-			zend_type_error("Array must contain only float, %s given at position %zu", zend_zval_type_name(elementZv), valueArray.size());
-			return false;
-		}
-		valueArray.push_back(value);
-	} ZEND_HASH_FOREACH_END();
-	return true;
-}
-
-template<typename TValue>
-using writeTypeArrayFunc_t = void (*)(zend_string*& buffer, size_t& offset, std::vector<TValue>& value);
-
-template<typename TValue, writeTypeArrayFunc_t<TValue> writeTypeFunc, typename TZendValue>
-void ZEND_FASTCALL zif_writeTypeArray(INTERNAL_FUNCTION_PARAMETERS) {
-	byte_buffer_writer_zend_object* object;
-	zval* objectZv;
-	HashTable* valueArrayHt;
-	
-	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 2, 2)
-		Z_PARAM_OBJECT_OF_CLASS_EX(objectZv, byte_buffer_writer_ce, 0, 0)
-		Z_PARAM_ARRAY_HT(valueArrayHt)
-	ZEND_PARSE_PARAMETERS_END();
-
-	object = WRITER_FROM_ZVAL(objectZv);
-
-	std::vector<TValue> valueArray;
-
-	if (!typeHashTableToArray(valueArrayHt, valueArray, std::type_identity<TZendValue>{})) {
-		return;
-	}
-
-	writeTypeFunc(object->writer.buffer, object->writer.offset, valueArray);
-	if (object->writer.offset > object->writer.used) {
-		object->writer.used = object->writer.offset;
-	}
-}
-
 ZEND_NAMED_FUNCTION(pmmp_encoding_private_constructor) {
 	//NOOP
 }
@@ -376,42 +243,8 @@ ZEND_NAMED_FUNCTION(pmmp_encoding_private_constructor) {
 		(writeFixedSizeType<native_type, byte_order>) \
 	)
 
-#define TYPE_ARRAY_ENTRIES(zend_name, native_type, zend_type, read_complex_type, write_complex_type) \
-	BC_ZEND_RAW_FENTRY_WITH_DOC_COMMENT( \
-		"read" zend_name "Array", \
-		(zif_readTypeArray<native_type, read_complex_type, zend_type>), \
-		arginfo_read_array, \
-		read_##zend_type##_array_doc_comment \
-	) \
-	BC_ZEND_RAW_FENTRY_WITH_DOC_COMMENT( \
-		"write" zend_name "Array", \
-		(zif_writeTypeArray<native_type, write_complex_type, zend_type>), \
-		arginfo_write_array, \
-		write_##zend_type##_array_doc_comment \
-	)
-
-#define FIXED_TYPE_ARRAY_ENTRIES(zend_name, native_type, zend_type, byte_order) \
-	TYPE_ARRAY_ENTRIES( \
-		zend_name, \
-		native_type, \
-		zend_type, \
-		(readFixedSizeTypeArray<native_type, byte_order>), \
-		(writeFixedSizeTypeArray<native_type, byte_order>) \
-	)
-
-#define COMPLEX_TYPE_ARRAY_ENTRIES(zend_name, native_type, zend_type, read_element, write_element) \
-	TYPE_ARRAY_ENTRIES( \
-		zend_name, \
-		native_type, \
-		zend_type, \
-		(readComplexTypeArray<native_type, read_element>), \
-		(writeComplexTypeArray<native_type, write_element>) \
-	)
-
 #define FIXED_INT_BASE_ENTRIES(zend_name, native_type, byte_order) \
-	FIXED_TYPE_ENTRIES(zend_name, native_type, zend_long, byte_order) \
-	\
-	FIXED_TYPE_ARRAY_ENTRIES(zend_name, native_type, zend_long, byte_order)
+	FIXED_TYPE_ENTRIES(zend_name, native_type, zend_long, byte_order)
 
 #define FIXED_INT_ENTRIES(zend_name, unsigned_native_type, signed_native_type, byte_order) \
 	FIXED_INT_BASE_ENTRIES("Unsigned" zend_name, unsigned_native_type, byte_order) \
@@ -419,18 +252,10 @@ ZEND_NAMED_FUNCTION(pmmp_encoding_private_constructor) {
 	FIXED_INT_BASE_ENTRIES("Signed" zend_name, signed_native_type, byte_order)
 
 #define FLOAT_ENTRIES(zend_name, native_type, byte_order) \
-	FIXED_TYPE_ENTRIES(zend_name, native_type, double, byte_order) \
-	FIXED_TYPE_ARRAY_ENTRIES(zend_name, native_type, double, byte_order)
+	FIXED_TYPE_ENTRIES(zend_name, native_type, double, byte_order)
 
 #define COMPLEX_INT_ENTRIES(zend_name, native_type, read_type, write_type) \
 	TYPE_ENTRIES( \
-		zend_name, \
-		native_type, \
-		zend_long, \
-		read_type, \
-		write_type \
-	) \
-	COMPLEX_TYPE_ARRAY_ENTRIES( \
 		zend_name, \
 		native_type, \
 		zend_long, \

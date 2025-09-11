@@ -272,7 +272,6 @@ static inline void writeUnsignedVarInt(unsigned char*& buffer, size_t& length, s
 	const auto TYPE_BITS = sizeof(TValue) * CHAR_BIT;
 
 	extendBuffer(buffer, length, offset, VarIntConstants::MAX_BYTES<TYPE_BITS>);
-	char result[VarIntConstants::MAX_BYTES<TYPE_BITS>];
 
 	TValue remaining = value;
 

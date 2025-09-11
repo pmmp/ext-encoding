@@ -36,11 +36,11 @@ static zend_object* writer_new(zend_class_entry* ce) {
 
 static zend_object* writer_clone(zend_object* object) {
 	auto old_object = fetch_from_zend_object<byte_buffer_writer_zend_object>(object);
-	auto new_object = fetch_from_zend_object<byte_buffer_writer_zend_object>(writer_new(object->ce));
-
-	zend_objects_clone_members(&new_object->std, &old_object->std);
+	auto new_object = alloc_custom_zend_object<byte_buffer_writer_zend_object>(object->ce, &byte_buffer_writer_zend_object_handlers);
 
 	writer_init_properties(new_object, old_object->writer.buffer, old_object->writer.used, old_object->writer.offset);
+
+	zend_objects_clone_members(&new_object->std, &old_object->std);
 
 	return &new_object->std;
 }

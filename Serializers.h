@@ -267,7 +267,11 @@ static void writeInt24(unsigned char*& buffer, size_t& length, size_t& offset, T
 
 template<typename TValue>
 static inline void writeUnsignedVarInt(unsigned char*& buffer, size_t& length, size_t& offset, TValue value) {
+	static_assert(std::is_unsigned<TValue>::value, "TValue must be an unsigned type");
+
 	const auto TYPE_BITS = sizeof(TValue) * CHAR_BIT;
+
+	extendBuffer(buffer, length, offset, VarIntConstants::MAX_BYTES<TYPE_BITS>);
 	char result[VarIntConstants::MAX_BYTES<TYPE_BITS>];
 
 	TValue remaining = value;
@@ -278,21 +282,17 @@ static inline void writeUnsignedVarInt(unsigned char*& buffer, size_t& length, s
 		TValue nextRemaining = remaining >> VarIntConstants::BITS_PER_BYTE;
 
 		if (nextRemaining == 0) {
-			result[i] = nextByte;
+			buffer[i + offset] = nextByte;
 
 			auto usedBytes = i + 1;
-			extendBuffer(buffer, length, offset, usedBytes);
-			memcpy(&buffer[offset], &result[0], usedBytes);
 			offset += usedBytes;
 
 			return;
 		}
 
-		result[i] = nextByte | VarIntConstants::MSB_MASK;
+		buffer[i + offset] = nextByte | VarIntConstants::MSB_MASK;
 		remaining = nextRemaining;
 	}
-
-	zend_value_error("Value too large to be encoded as a VarInt");
 }
 
 template<typename TUnsignedType, typename TSignedType>

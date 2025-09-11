@@ -253,8 +253,14 @@ void ZEND_FASTCALL zif_packType(INTERNAL_FUNCTION_PARAMETERS) {
 
 	writeTypeCommon<TValue, writeTypeFunc>(INTERNAL_FUNCTION_PARAM_PASSTHRU, writer, value);
 
-	RETVAL_STRINGL(ZSTR_VAL(writer.buffer), writer.used);
-	zend_string_release_ex(writer.buffer, 0);
+	if (ZSTR_LEN(writer.buffer) != writer.used) {
+		ZEND_ASSERT(0); //we don't expect unused bytes from oneshot packing
+
+		RETVAL_STRINGL(ZSTR_VAL(writer.buffer), writer.used);
+		zend_string_release_ex(writer.buffer, 0);
+	} else {
+		RETURN_STR(writer.buffer);
+	}
 }
 
 

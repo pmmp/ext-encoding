@@ -233,6 +233,8 @@ WRITER_METHOD(__unserialize) {
 	}
 
 	auto object = WRITER_THIS();
+	//would be nice to prevent this from being allocated, but I suppose it's also possible someone could call __unserialize() directly
+	efree(object->writer.buffer);
 
 	writer_init_properties(object, reinterpret_cast<unsigned char*>(Z_STRVAL_P(buffer)), Z_STRLEN_P(buffer), Z_LVAL_P(offset));
 }

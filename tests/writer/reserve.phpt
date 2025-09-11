@@ -7,7 +7,6 @@ use pmmp\encoding\ByteBufferWriter;
 use pmmp\encoding\Byte;
 
 $buffer = new ByteBufferWriter("");
-var_dump($buffer->getReservedLength()); //none
 
 $buffer->reserve(40);
 var_dump($buffer->getReservedLength()); //40
@@ -28,7 +27,6 @@ try{
 }
 ?>
 --EXPECT--
-int(0)
 int(40)
 string(0) ""
 int(40)

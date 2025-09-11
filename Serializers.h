@@ -2,7 +2,6 @@
 #define SERIALIZERS_H
 
 extern "C" {
-#include "Zend/zend_string.h"
 #include "Zend/zend_exceptions.h"
 }
 #include "classes/DataDecodeException.h"
@@ -184,31 +183,27 @@ static inline bool readSignedVarInt(unsigned char* bytes, size_t used, size_t& o
 	return true;
 }
 
-
-static inline void extendBuffer(zend_string*& buffer, size_t offset, size_t usedBytes) {
+static inline void extendBuffer(unsigned char*& buffer, size_t& length, size_t offset, size_t usedBytes) {
 	size_t requiredSize = offset + usedBytes;
-	if (ZSTR_LEN(buffer) < requiredSize) {
-		size_t doubleSize = ZSTR_LEN(buffer) * 2;
-		buffer = zend_string_realloc(buffer, doubleSize > requiredSize ? doubleSize : requiredSize, 0);
-		ZSTR_VAL(buffer)[ZSTR_LEN(buffer)] = '\0'; //make sure null terminator is always set, to stop sprintf reading out-of-bounds
-	}
-	else {
-		buffer = zend_string_separate(buffer, 0);
+	if (length < requiredSize) {
+		size_t doubleSize = length * 2;
+		length = doubleSize > requiredSize ? doubleSize : requiredSize;
+		buffer = reinterpret_cast<unsigned char*>(erealloc(buffer, length));
 	}
 }
 
 template<typename TValue>
-static void writeByte(zend_string*& buffer, size_t& offset, TValue value) {
-	extendBuffer(buffer, offset, sizeof(TValue));
+static void writeByte(unsigned char*& buffer, size_t& length, size_t& offset, TValue value) {
+	extendBuffer(buffer, length, offset, sizeof(TValue));
 
-	ZSTR_VAL(buffer)[offset] = *reinterpret_cast<char*>(&value);
+	buffer[offset] = *reinterpret_cast<char*>(&value);
 
 	offset += sizeof(TValue);
 }
 
 template<typename TValue, ByteOrder byteOrder>
-static void writeFixedSizeType(zend_string*& buffer, size_t& offset, TValue value) {
-	extendBuffer(buffer, offset, sizeof(TValue));
+static void writeFixedSizeType(unsigned char*& buffer, size_t& length, size_t& offset, TValue value) {
+	extendBuffer(buffer, length, offset, sizeof(TValue));
 
 	Flipper<TValue> flipper;
 	flipper.value = value;
@@ -217,15 +212,15 @@ static void writeFixedSizeType(zend_string*& buffer, size_t& offset, TValue valu
 		std::reverse(std::begin(flipper.bytes), std::end(flipper.bytes));
 	}
 
-	memcpy(&ZSTR_VAL(buffer)[offset], flipper.bytes, sizeof(flipper.bytes));
+	memcpy(&buffer[offset], flipper.bytes, sizeof(flipper.bytes));
 
 	offset += sizeof(TValue);
 }
 
 template<typename TValue, ByteOrder byteOrder>
-static void writeFixedSizeTypeArray(zend_string*& buffer, size_t& offset, std::vector<TValue>& valueArray) {
+static void writeFixedSizeTypeArray(unsigned char*& buffer, size_t& length, size_t& offset, std::vector<TValue>& valueArray) {
 	size_t arraySizeBytes = valueArray.size() * sizeof(TValue);
-	extendBuffer(buffer, offset, arraySizeBytes);
+	extendBuffer(buffer, length, offset, arraySizeBytes);
 
 	if (byteOrder != ByteOrder::Native) {
 		Flipper<TValue> flipper;
@@ -237,41 +232,41 @@ static void writeFixedSizeTypeArray(zend_string*& buffer, size_t& offset, std::v
 		}
 	}
 
-	memcpy(&ZSTR_VAL(buffer)[offset], reinterpret_cast<char*>(valueArray.data()), arraySizeBytes);
+	memcpy(&buffer[offset], reinterpret_cast<char*>(valueArray.data()), arraySizeBytes);
 	offset += arraySizeBytes;
 }
 
 template<typename TValue>
-using writeComplexTypeFunc_t = void (*) (zend_string*& buffer, size_t& offset, TValue value);
+using writeComplexTypeFunc_t = void (*) (unsigned char*& buffer, size_t& length, size_t& offset, TValue value);
 
 template<typename TValue, writeComplexTypeFunc_t<TValue> writeNaiveTypeFunc>
-static void writeComplexTypeArray(zend_string*& buffer, size_t& offset, std::vector<TValue>& valueArray) {
+static void writeComplexTypeArray(unsigned char*& buffer, size_t& length, size_t& offset, std::vector<TValue>& valueArray) {
 	for (size_t i = 0; i < valueArray.size(); i++) {
-		writeNaiveTypeFunc(buffer, offset, valueArray[i]);
+		writeNaiveTypeFunc(buffer, length, offset, valueArray[i]);
 	}
 }
 
 template<typename TValue, ByteOrder byteOrder>
-static void writeInt24(zend_string*& buffer, size_t& offset, TValue value) {
+static void writeInt24(unsigned char*& buffer, size_t& length, size_t& offset, TValue value) {
 	const size_t SIZE = 3;
-	extendBuffer(buffer, offset, SIZE);
+	extendBuffer(buffer, length, offset, SIZE);
 
 	if (byteOrder == ByteOrder::LittleEndian) {
-		ZSTR_VAL(buffer)[offset] = value & 0xff;
-		ZSTR_VAL(buffer)[offset + 1] = (value >> 8) & 0xff;
-		ZSTR_VAL(buffer)[offset + 2] = (value >> 16) & 0xff;
+		buffer[offset] = value & 0xff;
+		buffer[offset + 1] = (value >> 8) & 0xff;
+		buffer[offset + 2] = (value >> 16) & 0xff;
 	}
 	else {
-		ZSTR_VAL(buffer)[offset] = (value >> 16) & 0xff;
-		ZSTR_VAL(buffer)[offset + 1] = (value >> 8) & 0xff;
-		ZSTR_VAL(buffer)[offset + 2] = value & 0xff;
+		buffer[offset] = (value >> 16) & 0xff;
+		buffer[offset + 1] = (value >> 8) & 0xff;
+		buffer[offset + 2] = value & 0xff;
 	}
 
 	offset += SIZE;
 }
 
 template<typename TValue>
-static inline void writeUnsignedVarInt(zend_string*& buffer, size_t& offset, TValue value) {
+static inline void writeUnsignedVarInt(unsigned char*& buffer, size_t& length, size_t& offset, TValue value) {
 	const auto TYPE_BITS = sizeof(TValue) * CHAR_BIT;
 	char result[VarIntConstants::MAX_BYTES<TYPE_BITS>];
 
@@ -286,8 +281,8 @@ static inline void writeUnsignedVarInt(zend_string*& buffer, size_t& offset, TVa
 			result[i] = nextByte;
 
 			auto usedBytes = i + 1;
-			extendBuffer(buffer, offset, usedBytes);
-			memcpy(&ZSTR_VAL(buffer)[offset], &result[0], usedBytes);
+			extendBuffer(buffer, length, offset, usedBytes);
+			memcpy(&buffer[offset], &result[0], usedBytes);
 			offset += usedBytes;
 
 			return;
@@ -301,14 +296,14 @@ static inline void writeUnsignedVarInt(zend_string*& buffer, size_t& offset, TVa
 }
 
 template<typename TUnsignedType, typename TSignedType>
-static inline void writeSignedVarInt(zend_string*& buffer, size_t& offset, TSignedType value) {
+static inline void writeSignedVarInt(unsigned char*& buffer, size_t& length, size_t& offset, TSignedType value) {
 	TUnsignedType mask = 0;
 	if (value < 0) {
 		//we don't know the type of TUnsignedType here, can't use ~0 directly (the compiler will optimise this anyway)
 		mask = ~mask;
 	}
 
-	writeUnsignedVarInt<TUnsignedType>(buffer, offset, (static_cast<TUnsignedType>(value) << 1) ^ mask);
+	writeUnsignedVarInt<TUnsignedType>(buffer, length, offset, (static_cast<TUnsignedType>(value) << 1) ^ mask);
 }
 
 #endif

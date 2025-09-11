@@ -125,11 +125,11 @@ bool parseWriteTypeParams(zend_execute_data* execute_data, byte_buffer_writer_ze
 }
 
 template<typename TValue>
-using writeTypeFunc_t = void (*)(zend_string*& buffer, size_t& offset, TValue value);
+using writeTypeFunc_t = void (*)(unsigned char*& buffer, size_t& length, size_t& offset, TValue value);
 
 template<typename TValue, writeTypeFunc_t<TValue> writeTypeFunc>
 inline void writeTypeCommon(INTERNAL_FUNCTION_PARAMETERS, byte_buffer_writer_t& writer, TValue value) {
-	writeTypeFunc(writer.buffer, writer.offset, value);
+	writeTypeFunc(writer.buffer, writer.length, writer.offset, value);
 	if (writer.offset > writer.used) {
 		writer.used = writer.offset;
 	}
@@ -178,22 +178,21 @@ template<typename TValue, writeTypeFunc_t<TValue> writeTypeFunc, typename TZendV
 void ZEND_FASTCALL zif_packType(INTERNAL_FUNCTION_PARAMETERS) {
 	TValue value;
 	byte_buffer_writer_t writer = { 0 };
+	unsigned char stackBuffer[16]; //big enough for all currently supported types - it'd be good if the serializers told us how big the type is, but that's a problem for another time
 
 	if (!parsePackTypeParams(execute_data, value, std::type_identity<TZendValue>{})) {
 		return;
 	}
 
-	writer.buffer = zend_empty_string;
+	writer.buffer = stackBuffer;
+	writer.length = sizeof(stackBuffer);
 
 	writeTypeCommon<TValue, writeTypeFunc>(INTERNAL_FUNCTION_PARAM_PASSTHRU, writer, value);
 
-	if (ZSTR_LEN(writer.buffer) != writer.used) {
-		ZEND_ASSERT(0); //we don't expect unused bytes from oneshot packing
-
-		RETVAL_STRINGL(ZSTR_VAL(writer.buffer), writer.used);
-		zend_string_release_ex(writer.buffer, 0);
-	} else {
-		RETURN_STR(writer.buffer);
+	RETVAL_STRINGL(reinterpret_cast<char*>(writer.buffer), writer.used);
+	if (writer.buffer != stackBuffer) {
+		printf("stack buffer wasn't big enough :(\n");
+		efree(writer.buffer);
 	}
 }
 

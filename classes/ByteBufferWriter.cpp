@@ -11,17 +11,25 @@ extern "C" {
 static zend_object_handlers byte_buffer_writer_zend_object_handlers;
 zend_class_entry* byte_buffer_writer_ce;
 
-static void writer_init_properties(byte_buffer_writer_zend_object* object, zend_string* buffer, size_t used, size_t offset) {
-	object->writer.buffer = buffer;
-	zend_string_addref(buffer);
+static void writer_init_properties(byte_buffer_writer_zend_object* object, unsigned char* buffer, size_t length, size_t offset) {
+	object->writer.length = length; //we don't need to copy reserved memory
 	object->writer.offset = offset;
-	object->writer.used = used;
+	object->writer.used = length;
+	if (length == 0) {
+		const unsigned int preallocSize = 16;
+		object->writer.buffer = reinterpret_cast<unsigned char*>(emalloc(preallocSize));
+		object->writer.length = preallocSize;
+	} else {
+		object->writer.buffer = reinterpret_cast<unsigned char*>(emalloc(length));
+		memcpy(object->writer.buffer, buffer, length);
+	}
 }
+
 
 static zend_object* writer_new(zend_class_entry* ce) {
 	auto object = alloc_custom_zend_object<byte_buffer_writer_zend_object>(ce, &byte_buffer_writer_zend_object_handlers);
 
-	writer_init_properties(object, zend_empty_string, 0, 0);
+	writer_init_properties(object, nullptr, 0, 0);
 
 	return &object->std;
 }
@@ -40,7 +48,7 @@ static zend_object* writer_clone(zend_object* object) {
 static void writer_free(zend_object* std) {
 	auto object = fetch_from_zend_object<byte_buffer_writer_zend_object>(std);
 
-	zend_string_release_ex(object->writer.buffer, 0);
+	efree(object->writer.buffer);
 }
 
 static int writer_compare_objects(zval* obj1, zval* obj2) {
@@ -52,8 +60,8 @@ static int writer_compare_objects(zval* obj1, zval* obj2) {
 			if (
 				object1->writer.offset == object2->writer.offset &&
 				object1->writer.used == object2->writer.used &&
-				zend_string_equals(object1->writer.buffer, object2->writer.buffer)
-				) {
+				memcmp(object1->writer.buffer, object2->writer.buffer, object1->writer.used) == 0
+			) {
 				return 0;
 			}
 		}
@@ -75,7 +83,7 @@ WRITER_METHOD(__construct) {
 
 	object = WRITER_THIS();
 	if (object->writer.buffer) {
-		zend_string_release_ex(object->writer.buffer, 0);
+		efree(object->writer.buffer);
 	}
 
 	if (buffer == NULL) {
@@ -83,14 +91,14 @@ WRITER_METHOD(__construct) {
 	}
 
 	//write offset is placed at the end, as if the given string was written using writeByteArray()
-	writer_init_properties(object, buffer, ZSTR_LEN(buffer), ZSTR_LEN(buffer));
+	writer_init_properties(object, reinterpret_cast<unsigned char*>(ZSTR_VAL(buffer)), ZSTR_LEN(buffer), ZSTR_LEN(buffer));
 }
 
 WRITER_METHOD(getData) {
 	zend_parse_parameters_none_throw();
 
 	auto object = WRITER_THIS();
-	RETURN_STRINGL(ZSTR_VAL(object->writer.buffer), object->writer.used);
+	RETURN_STRINGL(reinterpret_cast<const char*>(object->writer.buffer), object->writer.used);
 }
 
 WRITER_METHOD(writeByteArray) {
@@ -106,8 +114,8 @@ WRITER_METHOD(writeByteArray) {
 
 	auto size = ZSTR_LEN(value);
 
-	extendBuffer(object->writer.buffer, object->writer.offset, size);
-	memcpy(ZSTR_VAL(object->writer.buffer) + object->writer.offset, ZSTR_VAL(value), size);
+	extendBuffer(object->writer.buffer, object->writer.length, object->writer.offset, size);
+	memcpy(&object->writer.buffer[object->writer.offset], ZSTR_VAL(value), size);
 	object->writer.offset += size;
 	if (object->writer.offset > object->writer.used) {
 		object->writer.used = object->writer.offset;
@@ -147,7 +155,7 @@ WRITER_METHOD(getReservedLength) {
 	zend_parse_parameters_none_throw();
 
 	auto object = WRITER_THIS();
-	RETURN_LONG(ZSTR_LEN(object->writer.buffer));
+	RETURN_LONG(object->writer.length); //don't count null terminator
 }
 
 WRITER_METHOD(reserve) {
@@ -162,15 +170,16 @@ WRITER_METHOD(reserve) {
 		return;
 	}
 	auto object = WRITER_THIS();
-	extendBuffer(object->writer.buffer, static_cast<size_t>(zlength), 0);
+	extendBuffer(object->writer.buffer, object->writer.length, static_cast<size_t>(zlength), 0);
 }
 
 WRITER_METHOD(trim) {
 	zend_parse_parameters_none_throw();
 
 	auto object = WRITER_THIS();
-	if (ZSTR_LEN(object->writer.buffer) > object->writer.used) {
-		object->writer.buffer = zend_string_truncate(object->writer.buffer, object->writer.used, 0);
+	if (object->writer.length > object->writer.used) {
+		object->writer.buffer = reinterpret_cast<unsigned char*>(erealloc(object->writer.buffer, object->writer.used));
+		object->writer.length = object->writer.used;
 	}
 }
 
@@ -189,7 +198,7 @@ WRITER_METHOD(__serialize) {
 	array_init(return_value);
 
 	//don't return the writer buffer directly - it may have uninitialized reserved memory
-	add_assoc_stringl(return_value, "buffer", ZSTR_VAL(object->writer.buffer), object->writer.used);
+	add_assoc_stringl(return_value, "buffer", reinterpret_cast<char*>(object->writer.buffer), object->writer.used);
 	add_assoc_long(return_value, "offset", object->writer.offset);
 }
 
@@ -225,7 +234,7 @@ WRITER_METHOD(__unserialize) {
 
 	auto object = WRITER_THIS();
 
-	writer_init_properties(object, Z_STR_P(buffer), Z_STRLEN_P(buffer), Z_LVAL_P(offset));
+	writer_init_properties(object, reinterpret_cast<unsigned char*>(Z_STRVAL_P(buffer)), Z_STRLEN_P(buffer), Z_LVAL_P(offset));
 }
 
 WRITER_METHOD(__debugInfo) {
@@ -235,7 +244,7 @@ WRITER_METHOD(__debugInfo) {
 	array_init(return_value);
 
 	//don't return the writer buffer directly - it may have uninitialized reserved memory
-	add_assoc_stringl(return_value, "buffer", ZSTR_VAL(object->writer.buffer), object->writer.used);
+	add_assoc_stringl(return_value, "buffer", reinterpret_cast<char*>(object->writer.buffer), object->writer.used);
 	add_assoc_long(return_value, "offset", object->writer.offset);
 }
 

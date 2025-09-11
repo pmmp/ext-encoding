@@ -7,7 +7,8 @@ extern "C" {
 #include "../ZendUtil.h"
 
 typedef struct _byte_buffer_writer_t {
-	zend_string* buffer;
+	unsigned char* buffer;
+	size_t length;
 	size_t offset;
 	size_t used;
 } byte_buffer_writer_t;

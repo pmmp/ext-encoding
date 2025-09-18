@@ -9,9 +9,6 @@ It was designed to supersede [`pocketmine/binaryutils`](https://github.com/pmmp/
 ## API
 A recent IDE stub can usually be found in our [custom stubs repository](https://github.com/pmmp/phpstorm-stubs/blob/fork/encoding/encoding.php).
 
-> [!WARNING]
-> The API design is not yet finalized. Everything is still subject to change prior to the 1.0.0 release.
-
 > [!NOTE]
 > Although `ext-encoding` provides similar functionality to `pocketmine/binaryutils`, it is *not* a drop-in replacement.
 > Its API is completely different and incompatible.

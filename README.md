@@ -13,7 +13,7 @@ A recent IDE stub can usually be found in our [custom stubs repository](https://
 > The API design is not yet finalized. Everything is still subject to change prior to the 1.0.0 release.
 
 > [!NOTE]
-> Although `ext-encoding` was provides similar functionality to `pocketmine/binaryutils`, it is *not* a drop-in replacement.
+> Although `ext-encoding` provides similar functionality to `pocketmine/binaryutils`, it is *not* a drop-in replacement.
 > Its API is completely different and incompatible.
 
 The new API has been designed with the lessons learned from `pocketmine/binaryutils` in mind. Most notably:

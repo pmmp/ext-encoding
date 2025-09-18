@@ -55,11 +55,16 @@ All the above problems contribute to this one, in addition to:
 - Extra function call overhead
 - Dealing with PHP `HashTable` structures is generally slow (a problem not solved by this extension currently)
 
-`VarInt::readSignedIntArray()`, for example, was found to be over 50 times faster in simple tests than a loop calling `BinaryStream::getVarInt()` when dealing with an array of 10k elements.
+During testing in the 0.x phase, writing batches of varints in a single function call was found to be over 50 times faster in simple tests than a loop calling `BinaryStream::getVarInt()` when dealing with an array of 10k elements.
 The most obvious cases where this will benefit PocketMine-MP are in `LevelChunkPacket` encoding, and plugins using `ClientboundMapItemDataPacket` could also benefit from it.
 
-In the future it'll probably make sense to add PHP wrappers for native array-of-type (e.g. `IntArray`, `LongArray` etc) so that we can avoid the performance and memory usage penalties
-of dealing with large primitive arrays at runtime.
+However, the extension currently doesn't offer any functions for array-of-type encoding and decoding. This is because there are unresolved questions about how they should work, and I don't want to be locked into a particular API before I figure out what makes the most sense.
+
+Some things to consider are:
+
+- Some places that could write batches of something (e.g. `int[]`) need to transform the values before writing. In this case, a `foreach` and repeated `write*()` often ends up being faster than allocating an `array` for the transformed values.
+- Some places that could write array-of-type don't actually store their data in PHP `array`s to begin with, but rather in native arrays (e.g. `PalettedBlockArray`). Forcing those cases to create a slow PHP `array`, when we just turn it back into a native array anyway, doesn't make any sense.
+- Most places that use PHP `array`s that could be written without transformation are already paying performance and memory penalties for using PHP `array`s in the first place (e.g. `IntArrayTag`). They'd probably benefit from thin wrappers around native fixed arrays, e.g. `IntArray`, `LongArray` etc.
 
 ### Why are there SO MANY functions? Why not just accept something like `bool $signed, ByteOrder $order` parameters?
 
@@ -80,6 +85,7 @@ However, considering how critical binary data handling is to performance in Pock
 Two reasons:
 - As described above, the static `read`/`write` methods can't be generated using `.stub.php` files. If we put the generated functions in `ByteBufferReader`/`ByteBufferWriter`, we'd be unable to use a `.stub.php` file to define the rest of its non-generated API.
 - I've made too many mistakes with byte order due to IDE auto complete. With this API design, byte order is decided by the very first character you type, so auto complete can't trip you up (and you have to import `BE` or `LE`).
+- For the other classes (`VarInt`, `Byte`), they don't really *need* to be static, but it makes more sense for the API to be consistent.
 
 ### Why fully specify `Signed` or `Unsigned` in every function name? Why not just have e.g. `readInt()` and `readUint()`?
 
